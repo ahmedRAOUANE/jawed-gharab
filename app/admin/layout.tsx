@@ -1,7 +1,17 @@
-const AdminLayout = () => {
+import { AdminHeader } from "@/components/layout/admin.header";
+
+const AdminLayout = ({
+    children,
+}: {
+    children: React.ReactNode;
+}) => {
     return(
-        <div>
-            <h1>Admin layout</h1>
+        <div className="">
+            <AdminHeader />
+
+            <main>
+                {children}
+            </main>
         </div>
     )
 }
