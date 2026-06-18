@@ -15,7 +15,7 @@ export const Header = () => {
 
   return (
     <header
-      className={`fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-white/10 flex flex-row-reverse justify-between items-center px-gutter h-20 transition-all duration-300 ${
+      className={`fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-primary-container/10 flex flex-row-reverse justify-between items-center px-gutter h-20 transition-all duration-300 ${
         scrolled ? "scrolled" : ""
       }`}
       id="main-nav"

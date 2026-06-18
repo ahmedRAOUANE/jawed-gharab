@@ -1,26 +1,33 @@
 import Image from "next/image";
 import GlassCard from "./GlassCard";
 
+interface TeamMember { initials: string, bgColor: string }
+
 export interface Project {
     id: number;
     title: string;
-    stage: string;
+    stage?: string;
     status: string;
-    statusType: "active" | "review" | "start";
-    progress: number;
+    statusType: "active" | "review" | "start" | "editing" | "delivered";
+    progress?: number;
     imageUrl: string;
+    client?: string;
+    lastUpdated?: string;
+    team?: TeamMember[];
 }
 
 const statusStyles = {
     active: "bg-primary-container text-on-primary-container",
     review: "bg-tertiary-container text-on-tertiary-container",
     start: "bg-secondary-container text-on-secondary-container",
+    editing: "bg-secondary-container text-on-secondary-container",
+    delivered: "bg-secondary-container text-on-secondary-container",
 };
 
-export const ProjectCard = ({ project }: { project: Project }) => {
+export const ProjectCard = ({ project, className, largeImg }: { project: Project, className?: string, largeImg?: boolean }) => {
     return (
-        <GlassCard className="p-4 rounded-xl flex flex-col md:flex-row items-center gap-6">
-            <div className="w-full md:w-40 h-24 rounded-lg overflow-hidden bg-surface-variant">
+        <GlassCard className={`p-4 rounded-xl flex items-center gap-6 ${className}`}>
+            <div className={`h-24 rounded-lg overflow-hidden bg-surface-variant ${largeImg ? "w-full" : ""}`}>
                 <Image
                     width={100}
                     height={100}

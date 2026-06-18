@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 import { MdTrendingUp, MdFiberNew } from "react-icons/md";
 
 interface StatsCardProps {
-    icon: string; // using material icon name, but we'll use react-icons equivalent
+    icon?: string; // using material icon name, but we'll use react-icons equivalent
     label: string;
     value: string;
     trend?: string;
@@ -29,16 +29,16 @@ export const StatsCard = ({
     trendUp,
     badge,
 }: StatsCardProps) => {
-    const IconComponent = iconMap[icon];
+    const IconComponent = icon && iconMap[icon];
 
     return (
         <GlassCard className="p-6 rounded-xl">
             <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-primary-container/20 rounded-lg">
-                    {IconComponent && (
+                {IconComponent && (
+                    <div className="p-3 bg-primary-container/20 rounded-lg">
                         <span className="text-primary text-2xl">{IconComponent}</span>
-                    )}
-                </div>
+                    </div>
+                )}
                 {trend && (
                     <span
                         className={`flex items-center gap-1 font-label-md text-label-md ${trendUp ? "text-green-400" : "text-primary"

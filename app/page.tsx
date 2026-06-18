@@ -14,18 +14,18 @@ export default function Home() {
     <div>
       <Header />
 
-       <main>
-      <Hero />
-      <Services />
-      <WhyChooseMe />
-      <PortfolioSection />
-      <ProcessTimeline />
-      <TestimonialsSection />
-      <ContactSection /> 
-    </main>
+      <main>
+        <Hero />
+        <Services />
+        <WhyChooseMe />
+        <PortfolioSection />
+        <ProcessTimeline />
+        <TestimonialsSection />
+        <ContactSection />
+      </main>
 
-      <MobileBottomNav/>
-      <Footer/>
+      <MobileBottomNav />
+      <Footer />
     </div>
   );
 }

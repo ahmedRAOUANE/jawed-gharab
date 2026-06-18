@@ -13,14 +13,14 @@
   --color-on-secondary: #283044;
   --color-secondary-container: #3f465c;
   --color-on-secondary-container: #adb4ce;
-  --color-surface: #081425;
-  --color-on-surface: #d8e3fb;
+  --color-surface: #15203166; 
+  --color-on-surface: #d8e3fb; /*! repeated -on-background */
   --color-surface-variant: #2a3548;
   --color-on-surface-variant: #c3c6d7;
   --color-surface-container: #152031;
   --color-surface-container-low: #111c2d;
   --color-surface-container-high: #1f2a3c;
-  --color-surface-container-highest: #2a3548;
+  --color-surface-container-highest: #2a3548; /*! repeated -surface-variant */
   --color-surface-container-lowest: #040e1f;
   --color-error: #ffb4ab;
   --color-on-error: #690005;
@@ -62,15 +62,15 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #081425;
-  --foreground: #d8e3fb;
+  --background: var(--color-background);
+  --foreground: var(--color-on-background);
 }
 
 .dark {
-  --background: #081425;
-  --foreground: #d8e3fb;
-  --color-background: #081425;
-  --color-foreground: #d8e3fb;
+  --background: var(--color-background);
+  --foreground: var(--color-on-background);
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-on-background);
 }
 
 body {
@@ -82,7 +82,7 @@ body {
 /* ... Mesh Background, Glass Card, Text Gradient styles ... */
 
 .glass-card {
-  background: rgba(21, 32, 49, 0.4);
+  background: var(--color-surface);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -106,6 +106,7 @@ body {
   transform: rotate(45deg);
   transition: transform 0.6s ease;
   pointer-events: none;
+  z-index: -1;
 }
 
 .glass-card:hover::after {
@@ -113,7 +114,7 @@ body {
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #b4c5ff 0%, #2563eb 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-container) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -128,7 +129,7 @@ body {
   width: 100%;
   height: 100%;
   z-index: -1;
-  background-color: #081425;
+  background-color: var(--color-background);
   background-image:
     radial-gradient(at 0% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
     radial-gradient(at 50% 0%, hsla(225, 100%, 20%, 1) 0, transparent 50%),
@@ -179,7 +180,14 @@ body {
 /* ... Nav Glass Enhancement ... */
 
 header.scrolled {
-  background: rgba(8, 20, 37, 0.9);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-  border-bottom: 1px solid rgba(180, 197, 255, 0.2);
+  background: var(--color-surface);
+  box-shadow: 0 4px 30px var(--color-background);
+  border-bottom: 1px solid #b4c5ff33;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
 }

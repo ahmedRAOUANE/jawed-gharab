@@ -2,16 +2,32 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { MdNotifications } from "react-icons/md";
 
 export const AdminHeader = () => {
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 50);
+        };
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
     return (
-        <header className="sticky top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-white/10 flex flex-row-reverse justify-between items-center px-gutter h-20">
+        <header
+            className={`fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-primary-container/10 flex flex-row-reverse justify-between items-center px-gutter h-20 transition-all duration-300 ${scrolled ? "scrolled" : ""
+                }`}
+            id="main-nav"
+        >
             <div className="flex items-center gap-4">
                 <div className="text-headline-md font-headline-md font-bold tracking-tighter text-primary">
-                    MASTERY
+                    Djawad GH
                 </div>
             </div>
+            
             <nav className="hidden md:flex flex-row-reverse items-center gap-8">
                 <Link href="/admin/settings" className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all duration-300">
                     الإعدادات

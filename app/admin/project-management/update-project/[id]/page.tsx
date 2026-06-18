@@ -1,9 +1,9 @@
-const RequestsPage = () => {
+const UpdateProjectPage = () => {
     return (
         <main className="pt-32 pb-40 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
-            RequestsPage
+            UpdateProjectPage
         </main>
     )
 }
 
-export default RequestsPage
+export default UpdateProjectPage
