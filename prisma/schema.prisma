@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,8 +6,113 @@ datasource db {
   provider = "postgresql"
 }
 
-model User { 
-  id    Int     @id @default(autoincrement()) 
-  email String  @unique
-  name  String?
+// -------------------- Enums --------------------
+
+enum ProjectStatus {
+  START      // بدء العمل
+  EDITING    // قيد المونتاج
+  REVIEW     // في انتظار المراجعة
+  DELIVERED  // تم التسليم
+}
+
+enum ProjectType {
+  COMMERCIAL     // إعلان
+  DOCUMENTARY    // وثائقي
+  MOTION_GRAPHICS // موشن جرافيك
+  MUSIC_VIDEO    // فيديو موسيقي
+  OTHER          // أخرى
+}
+
+enum RequestStatus {
+  NEW        // جديد
+  PENDING    // قيد الانتظار
+  CONTACTED  // تم التواصل
+}
+
+enum UserRole {
+  ADMIN
+  DIRECTOR    // مخرج
+  EDITOR      // محرر
+  VIEWER      // مشاهد (for future)
+}
+
+// -------------------- Models --------------------
+
+model User {
+  id              Int       @id @default(autoincrement())
+  email           String    @unique
+  password        String    // hashed, for future authentication
+  name            String
+  role            UserRole  @default(EDITOR)
+  avatarUrl       String?   @map("avatar_url")
+  accountStatus   String    @default("نشط") @map("account_status")
+  profileProgress Int       @default(0) @map("profile_progress")
+  lastLogin       DateTime? @map("last_login")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  projects        Project[] // one-to-many (user created projects)
+  teamMembers     TeamMember[] // optional: if team members are also users
+
+  @@map("users")
+}
+
+model Project {
+  id            Int          @id @default(autoincrement())
+  title         String
+  client        String
+  description   String
+  status        ProjectStatus @default(START)
+  projectType   ProjectType   @default(OTHER) @map("project_type")
+  stage         String?      // e.g., "تصحيح الألوان", "التعديل النهائي"
+  progress      Int          @default(0) // 0-100
+  budget        Float
+  deadline      DateTime
+  thumbnailUrl  String?      @map("thumbnail_url")
+  projectLink   String?      @map("project_link")
+  userId        Int          @map("user_id") // creator/owner
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  deletedAt     DateTime?    @map("deleted_at") // soft delete
+
+  user          User         @relation(fields: [userId], references: [id])
+  teamMembers   TeamMember[]
+
+  @@map("projects")
+}
+
+model Request {
+  id          Int            @id @default(autoincrement())
+  name        String         // client name
+  type        String         // e.g., "إنتاج وثائقي", "فيديو إعلاني"
+  details     String
+  budget      String?        // formatted budget string
+  location    String?
+  deadline    String?        // can be date or description
+  status      RequestStatus  @default(NEW)
+  icon        String         // "person", "business", "movie" (for UI)
+  replied     Boolean        @default(false)
+  repliedAt   DateTime?      @map("replied_at")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  deletedAt   DateTime?      @map("deleted_at") // soft delete
+
+  @@map("requests")
+}
+
+model TeamMember {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  role      String   // e.g., "محرر فيديو", "مصور سينمائي"
+  avatar    String?  // optional avatar URL
+  skills    String[] // array of skills
+  projectId Int      @map("project_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  project   Project  @relation(fields: [projectId], references: [id])
+
+  @@map("team_members")
+  users User[]
 }
