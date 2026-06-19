@@ -6,10 +6,10 @@ import { ProjectUpdateSchema } from "@/lib/validation";
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = parseInt(params.id);
+        const id = parseInt((await params).id);
         if (isNaN(id)) {
             return errorResponse("Invalid project ID", 400);
         }
@@ -39,10 +39,10 @@ export async function GET(
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = parseInt(params.id);
+        const id = parseInt((await params).id);
         if (isNaN(id)) {
             return errorResponse("Invalid project ID", 400);
         }
@@ -85,10 +85,10 @@ export async function PUT(
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = parseInt(params.id);
+        const id = parseInt((await params).id);
         if (isNaN(id)) {
             return errorResponse("Invalid project ID", 400);
         }

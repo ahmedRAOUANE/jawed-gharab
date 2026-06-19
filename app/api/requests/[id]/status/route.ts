@@ -6,10 +6,10 @@ import { RequestStatusSchema } from "@/lib/validation";
 
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = parseInt(params.id);
+        const id = parseInt((await params).id);
         if (isNaN(id)) {
             return errorResponse("Invalid request ID", 400);
         }

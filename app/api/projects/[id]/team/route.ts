@@ -6,10 +6,10 @@ import { TeamMemberSchema } from "@/lib/validation";
 
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const projectId = parseInt(params.id);
+        const projectId = parseInt((await params).id);
         if (isNaN(projectId)) {
             return errorResponse("Invalid project ID", 400);
         }
@@ -43,10 +43,10 @@ export async function POST(
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const projectId = parseInt(params.id);
+        const projectId = parseInt((await params).id);
         if (isNaN(projectId)) {
             return errorResponse("Invalid project ID", 400);
         }
