@@ -78,8 +78,8 @@ export async function POST(request: NextRequest) {
         // Validate with CreateProjectSchema (userId optional, but we'll set a default for now)
         const validatedData = CreateProjectSchema.parse(body);
 
-        // For now, use a default user ID (1) or from session later
-        const userId = validatedData.userId || 1; // temporary
+        // TODO: replace this with session userId when auth is implemented
+        const userId = validatedData.userId || 1; 
 
         // Convert deadline to Date object
         const deadline = new Date(validatedData.deadline);

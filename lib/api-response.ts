@@ -23,8 +23,7 @@ export function successResponse<T>(
     data,
     message,
     pagination,
-    status
-  });
+  }, {status});
 }
 
 export function errorResponse(
