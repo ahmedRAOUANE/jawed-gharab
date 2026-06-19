@@ -30,7 +30,7 @@ export const RequestSchema = z.object({
   details: z.string().min(1, "التفاصيل مطلوبة"),
   budget: z.string().optional(),
   location: z.string().optional(),
-  deadline: z.coerce.date().optional(),
+  deadline: z.string().optional(),
   status: z.enum(["NEW", "PENDING", "CONTACTED"]).default("NEW"),
   icon: z.enum(["person", "business", "movie"]).default("person"),
   replied: z.boolean().default(false),
@@ -51,7 +51,7 @@ export const RequestStatusSchema = z.object({
 // TeamMember validation
 export const TeamMemberSchema = z.object({
   name: z.string().min(1, "الاسم مطلوب"),
-  email: z.string().email("بريد إلكتروني غير صالح"),
+  email: z.email("بريد إلكتروني غير صالح"),
   role: z.string().min(1, "الدور مطلوب"),
   avatar: z.string().url().optional(),
   skills: z.array(z.string()).optional(),
