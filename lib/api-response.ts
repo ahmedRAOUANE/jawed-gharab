@@ -13,15 +13,17 @@ export type ApiResponse<T = Record<string, unknown>> = {
 };
 
 export function successResponse<T>(
+  status: number,
   data: T,
   message?: string,
-  pagination?: ApiResponse["pagination"]
+  pagination?: ApiResponse["pagination"],
 ): NextResponse<ApiResponse<T>> {
   return NextResponse.json({
     success: true,
     data,
     message,
     pagination,
+    status
   });
 }
 
