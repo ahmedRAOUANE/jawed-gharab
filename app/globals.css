@@ -85,7 +85,7 @@ body {
   background: var(--color-surface);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #ffffff1a;
   position: relative;
   overflow: hidden;
 }
@@ -190,4 +190,24 @@ header.scrolled {
   border-radius: 100px;
   font-size: 12px;
   font-weight: 600;
+}
+
+/* In globals.css */
+.item-expanded .expandable-content {
+  max-height: 500px;
+  opacity: 1;
+  margin-top: 1.5rem;
+}
+
+.item-expanded .expand-icon {
+  transform: rotate(180deg);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
