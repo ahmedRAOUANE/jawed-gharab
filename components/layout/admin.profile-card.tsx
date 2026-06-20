@@ -1,10 +1,13 @@
+// components/layout/admin.profile-card.tsx
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { MdEdit } from "react-icons/md";
 
 interface ProfileCardProps {
     name: string;
+    email: string;
     role: string;
     avatarUrl: string;
     accountStatus: string;
@@ -13,6 +16,7 @@ interface ProfileCardProps {
 
 export const ProfileCard = ({
     name,
+    email,
     role,
     avatarUrl,
     accountStatus,
@@ -23,27 +27,37 @@ export const ProfileCard = ({
             <div className="relative mb-6 group">
                 <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-primary/50 p-1 group-hover:border-primary transition-all duration-300">
                     <Image
-                        width={100}
-                        height={100}
+                        width={128}
+                        height={128}
                         src={avatarUrl}
                         alt={name}
                         className="w-full h-full object-cover rounded-full"
                     />
                 </div>
 
-                <button type="button" title="change avatar" className="absolute bottom-1 right-1 bg-primary text-on-primary p-2 rounded-full shadow-lg hover:scale-110 active:scale-90 transition-all">
+                <Link
+                    href="/admin/settings/profile"
+                    className="absolute bottom-1 right-1 bg-primary text-on-primary p-2 rounded-full shadow-lg hover:scale-110 active:scale-90 transition-all"
+                >
                     <MdEdit size={18} />
-                </button>
+                </Link>
             </div>
 
             <h2 className="font-headline-md text-headline-md text-on-surface mb-1">
                 {name}
             </h2>
 
-            <p className="font-label-md text-label-md text-primary mb-6">{role}</p>
-            <button type="button" className="w-full py-4 px-6 bg-primary text-on-primary font-label-md text-label-md rounded-xl hover:bg-opacity-90 active:scale-95 transition-all duration-200">
+            <p className="font-label-md text-label-md text-primary mb-1">{role}</p>
+            <p className="font-caption text-caption text-on-surface-variant mb-6">
+                {email}
+            </p>
+
+            <Link
+                href="/admin/settings/profile"
+                className="w-full py-4 px-6 bg-primary text-on-primary font-label-md text-label-md rounded-xl hover:bg-opacity-90 active:scale-95 transition-all duration-200 text-center"
+            >
                 تعديل الملف الشخصي
-            </button>
+            </Link>
 
             {/* Status Summary */}
             <div className="w-full mt-4 bg-background/70 border border-primary/20 rounded-2xl p-6">
@@ -64,7 +78,7 @@ export const ProfileCard = ({
                         style={{ width: `${profileProgress}%` }}
                     ></div>
                 </div>
-                
+
                 <p className="mt-2 font-caption text-caption text-on-surface-variant">
                     اكتمال الملف: {profileProgress}%
                 </p>

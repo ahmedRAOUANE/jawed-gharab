@@ -3,7 +3,7 @@ import { ChangeEvent } from "react";
 interface FormFieldProps {
     label: string;
     name: string;
-    type?: "text" | "textarea" | "select" | "date" | "number";
+    type?: "text" | "textarea" | "select" | "date" | "number" | "email" | "password";
     value: string;
     onChange: (
         e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>

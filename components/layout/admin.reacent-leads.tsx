@@ -1,36 +1,11 @@
-// src/components/admin/RecentLeadsList.tsx
-
+// components/layout/admin.reacent-leads.tsx
 import { Lead, LeadCard } from "../ui/admin.lead-card";
 
-const leads: Lead[] = [
-    {
-        id: 1,
-        initials: "أ",
-        name: "أحمد منصور",
-        projectType: "إعلان تجاري لشركة سيارات",
-        status: "new",
-        replied: false,
-    },
-    {
-        id: 2,
-        initials: "س",
-        name: "سارة الخالدي",
-        projectType: "تغطية مؤتمر تقني",
-        status: "pending",
-        replied: false,
-    },
-    {
-        id: 3,
-        initials: "م",
-        name: "محمد إبراهيم",
-        projectType: "فيديو يوتيوب (مونتاج)",
-        status: "replied",
-        replied: true,
-        repliedAt: "منذ ساعتين",
-    },
-];
+interface RecentLeadsListProps {
+    leads: Lead[];
+}
 
-export const RecentLeadsList = () => {
+export const RecentLeadsList = ({ leads }: RecentLeadsListProps) => {
     return (
         <section className="lg:col-span-1">
             <div className="flex justify-between items-center mb-8">

@@ -21,6 +21,7 @@ export interface Lead {
     deadline?: string;
     status: string;
     icon: "person" | "business" | "movie";
+    createdAt: Date;
 }
 
 const iconMap = {

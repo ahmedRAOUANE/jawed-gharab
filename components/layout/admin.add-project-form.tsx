@@ -1,11 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { MdSave, MdCancel } from "react-icons/md";
 import { FormField } from "../ui/form-field";
 import { ImageUpload } from "../ui/image-upload";
 import { TeamMembersInput } from "../ui/team-member-input";
+import { ProjectInput } from "@/lib/validation";
+import { ProjectStatus, ProjectType } from "@prisma/client";
+
+// API base URL
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 // Types
 interface ProjectData {
@@ -19,29 +24,60 @@ interface ProjectData {
     deadline: string;
     budget: number | "";
     thumbnail: string | File;
+    projectLink?: string;
 }
 
 interface ProjectFormProps {
     mode: "create" | "edit";
     initialData?: Partial<ProjectData>;
+    projectId?: string; // for edit mode
 }
 
-const statusOptions = [
-    "قيد المونتاج",
-    "في انتظار المراجعة",
-    "تم التسليم",
-    "بدء العمل",
-];
+// Map UI status to API enum
+const mapStatusToAPI = (status: string): ProjectStatus => {
+    const map: Record<string, ProjectStatus> = {
+        "بدء العمل": "START",
+        "قيد المونتاج": "EDITING",
+        "في انتظار المراجعة": "REVIEW",
+        "تم التسليم": "DELIVERED",
+    };
+    return map[status] || "START";
+};
 
-const projectTypeOptions = [
-    "إعلان",
-    "وثائقي",
-    "موشن جرافيك",
-    "فيديو موسيقي",
-    "أخرى",
-];
+const mapTypeToAPI = (type: string): ProjectType => {
+    const map: Record<string, ProjectType> = {
+        "إعلان": "COMMERCIAL",
+        "وثائقي": "DOCUMENTARY",
+        "موشن جرافيك": "MOTION_GRAPHICS",
+        "فيديو موسيقي": "MUSIC_VIDEO",
+        "أخرى": "OTHER",
+    };
+    return map[type] || "OTHER";
+};
 
-export const ProjectForm = ({ mode, initialData = {} }: ProjectFormProps) => {
+// Map API status to UI
+const mapStatusToUI = (status: ProjectStatus): string => {
+    const map: Record<ProjectStatus, string> = {
+        "START": "بدء العمل",
+        "EDITING": "قيد المونتاج",
+        "REVIEW": "في انتظار المراجعة",
+        "DELIVERED": "تم التسليم",
+    };
+    return map[status] || "بدء العمل";
+};
+
+const mapTypeToUI = (type: string): string => {
+    const map: Record<string, string> = {
+        "COMMERCIAL": "إعلان",
+        "DOCUMENTARY": "وثائقي",
+        "MOTION_GRAPHICS": "موشن جرافيك",
+        "MUSIC_VIDEO": "فيديو موسيقي",
+        "OTHER": "أخرى",
+    };
+    return map[type] || "أخرى";
+};
+
+export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormProps) => {
     const router = useRouter();
     const [formData, setFormData] = useState<ProjectData>({
         title: initialData.title || "",
@@ -53,19 +89,36 @@ export const ProjectForm = ({ mode, initialData = {} }: ProjectFormProps) => {
         deadline: initialData.deadline || "",
         budget: initialData.budget || "",
         thumbnail: initialData.thumbnail || "",
+        projectLink: initialData.projectLink || "",
     });
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [submitError, setSubmitError] = useState<string | null>(null);
+
+    const statusOptions = [
+        "بدء العمل",
+        "قيد المونتاج",
+        "في انتظار المراجعة",
+        "تم التسليم",
+    ];
+
+    const projectTypeOptions = [
+        "إعلان",
+        "وثائقي",
+        "موشن جرافيك",
+        "فيديو موسيقي",
+        "أخرى",
+    ];
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
-        // Clear error for this field
         if (errors[name]) {
             setErrors((prev) => ({ ...prev, [name]: "" }));
         }
+        setSubmitError(null);
     };
 
     const handleTeamChange = (team: string[]) => {
@@ -93,16 +146,86 @@ export const ProjectForm = ({ mode, initialData = {} }: ProjectFormProps) => {
         if (!validate()) return;
 
         setLoading(true);
-        // Simulate API call
+        setSubmitError(null);
+
         try {
-            // In real app, upload thumbnail first if it's a File, then send data
-            console.log("Submitting:", formData);
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            // Prepare payload
+            const payload: ProjectInput = {
+                title: formData.title,
+                client: formData.client,
+                description: formData.description,
+                status: mapStatusToAPI(formData.status),
+                projectType: mapTypeToAPI(formData.projectType),
+                stage: "مرحلة غير محددة", // we can allow a stage field later
+                progress: 0, // default
+                budget: Number(formData.budget),
+                deadline: new Date(formData.deadline).toISOString(),
+                projectLink: formData.projectLink || "",
+                userId: 1, // we'll set a default or get from session later
+            };
+
+            // Handle thumbnail: if it's a File, convert to base64
+            if (formData.thumbnail instanceof File) {
+                // For simplicity, we'll skip file upload and just use a placeholder.
+                // In production, you'd upload to a cloud service and get a URL.
+                // For now, we'll just use a placeholder.
+                payload.thumbnailUrl = "https://via.placeholder.com/400x225/2563eb/ffffff?text=MASTERY";
+            } else if (typeof formData.thumbnail === "string" && formData.thumbnail) {
+                payload.thumbnailUrl = formData.thumbnail;
+            } else {
+                payload.thumbnailUrl = "https://via.placeholder.com/400x225/2563eb/ffffff?text=MASTERY";
+            }
+
+            // For team members, we'll add them as separate API calls or include in the project creation.
+            // Since the API doesn't have a field for team members in the project creation,
+            // we'll handle team members separately. For now, we'll ignore the team field.
+            // Later we can implement team member creation.
+
+            const url = mode === "create"
+                ? `${API_BASE}/api/projects`
+                : `${API_BASE}/api/projects/${projectId}`;
+
+            const method = mode === "create" ? "POST" : "PUT";
+
+            const response = await fetch(url, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "حدث خطأ أثناء حفظ المشروع");
+            }
+
+            const result = await response.json();
+            const createdProject = result.data;
+
+            // If there are team members, add them
+            if (formData.team.length > 0 && createdProject.id) {
+                // Add each team member
+                for (const memberName of formData.team) {
+                    try {
+                        await fetch(`${API_BASE}/api/projects/${createdProject.id}/team`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                name: memberName,
+                                email: `${memberName.replace(/\s/g, "").toLowerCase()}@placeholder.com`,
+                                role: "عضو فريق",
+                            }),
+                        });
+                    } catch (err) {
+                        console.error("Failed to add team member:", err);
+                    }
+                }
+            }
+
             alert(mode === "create" ? "تم إضافة المشروع بنجاح" : "تم تحديث المشروع بنجاح");
-            router.push("/admin/projects");
-        } catch (error) {
-            console.error(error);
-            alert("حدث خطأ أثناء حفظ المشروع");
+            router.push("/admin/project-management");
+            router.refresh();
+        } catch (err) {
+            setSubmitError(err instanceof Error ? err.message : "حدث خطأ غير متوقع");
         } finally {
             setLoading(false);
         }
@@ -110,6 +233,12 @@ export const ProjectForm = ({ mode, initialData = {} }: ProjectFormProps) => {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-8">
+            {submitError && (
+                <div className="glass-card p-4 rounded-xl border border-error/30 text-error">
+                    {submitError}
+                </div>
+            )}
+
             <div className="glass-card p-8 rounded-2xl space-y-6">
                 <h2 className="font-headline-md text-headline-md text-on-background mb-6">
                     المعلومات الأساسية
@@ -154,12 +283,12 @@ export const ProjectForm = ({ mode, initialData = {} }: ProjectFormProps) => {
                 </div>
 
                 <FormField
-                    label="رابط المشروع *"
-                    name="link"
-                    value={formData.description}
+                    label="رابط المشروع"
+                    name="projectLink"
+                    type="text"
+                    value={formData.projectLink || ""}
                     onChange={handleChange}
-                    placeholder="e.g: https://youtube/yourvideo"
-                    error={errors.description}
+                    placeholder="https://youtube.com/yourvideo"
                 />
 
                 <FormField
@@ -222,7 +351,7 @@ export const ProjectForm = ({ mode, initialData = {} }: ProjectFormProps) => {
                     <MdCancel size={20} />
                     <span>إلغاء</span>
                 </button>
-                
+
                 <button
                     type="submit"
                     disabled={loading}

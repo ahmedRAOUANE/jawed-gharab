@@ -19,21 +19,14 @@ const menuItems: MenuItem[] = [
         icon: MdManageAccounts,
         title: "إعدادات الحساب",
         description: "البريد الإلكتروني، اللغة، والمنطقة",
-        href: "settings/account",
+        href: "/admin/settings/account",
     },
-    // {
-    //     id: "notifications",
-    //     icon: MdNotificationsActive,
-    //     title: "تفضلات الإشعارات",
-    //     description: "إشعارات البريد، التطبيق، والرسائل",
-    //     href: "#",
-    // }, // TODO: this feature will be added later
     {
         id: "security",
         icon: MdLockReset,
         title: "تغيير كلمة المرور",
         description: "تحديث كلمة السر وإعدادات الأمان",
-        href: "settings/password",
+        href: "/admin/settings/password",
     },
 ];
 
@@ -64,7 +57,10 @@ export const SettingsMenu = () => {
                             </div>
                         </div>
 
-                        <MdChevronLeft className="text-on-surface-variant opacity-40 group-hover:translate-x-[-8px] transition-transform" size={24} />
+                        <MdChevronLeft
+                            className="text-on-surface-variant opacity-40 group-hover:translate-x-[-8px] transition-transform"
+                            size={24}
+                        />
                     </Link>
                 ))}
             </nav>

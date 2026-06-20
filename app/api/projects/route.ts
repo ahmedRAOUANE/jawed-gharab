@@ -10,11 +10,11 @@ export async function GET(request: NextRequest) {
     try {
         const searchParams = request.nextUrl.searchParams;
         const { page, limit, search, status, type } = PaginationSchema.parse({
-            page: searchParams.get("page"),
-            limit: searchParams.get("limit"),
-            search: searchParams.get("search"),
-            status: searchParams.get("status"),
-            type: searchParams.get("type"),
+            page: searchParams.get("page") ?? undefined,
+            limit: searchParams.get("limit") ?? undefined,
+            search: searchParams.get("search") ?? undefined,
+            status: searchParams.get("status") ?? undefined,
+            type: searchParams.get("type") ?? undefined,
         });
 
         const skip = (page - 1) * limit;
