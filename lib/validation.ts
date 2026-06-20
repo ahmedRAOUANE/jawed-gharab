@@ -63,8 +63,8 @@ export type TeamMemberInput = z.infer<typeof TeamMemberSchema>;
 // User profile update
 export const UserUpdateSchema = z.object({
   name: z.string().min(1).optional(),
-  email: z.string().email().optional(),
-  avatarUrl: z.string().url().optional(),
+  email: z.email().optional(),
+  avatarUrl: z.url().optional(),
   role: z.enum(["ADMIN", "DIRECTOR", "EDITOR", "VIEWER"]).optional(),
   accountStatus: z.string().optional(),
   profileProgress: z.number().int().min(0).max(100).optional(),
