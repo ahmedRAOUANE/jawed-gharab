@@ -1,3 +1,5 @@
+// prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,11 +18,11 @@ enum ProjectStatus {
 }
 
 enum ProjectType {
-  COMMERCIAL     // إعلان
-  DOCUMENTARY    // وثائقي
+  COMMERCIAL      // إعلان
+  DOCUMENTARY     // وثائقي
   MOTION_GRAPHICS // موشن جرافيك
-  MUSIC_VIDEO    // فيديو موسيقي
-  OTHER          // أخرى
+  MUSIC_VIDEO     // فيديو موسيقي
+  OTHER           // أخرى
 }
 
 enum RequestStatus {
@@ -31,9 +33,9 @@ enum RequestStatus {
 
 enum UserRole {
   ADMIN
-  DIRECTOR    // مخرج
-  EDITOR      // محرر
-  VIEWER      // مشاهد (for future)
+  DIRECTOR
+  EDITOR
+  VIEWER
 }
 
 // -------------------- Models --------------------
@@ -41,7 +43,7 @@ enum UserRole {
 model User {
   id              Int       @id @default(autoincrement())
   email           String    @unique
-  password        String    // hashed, for future authentication
+  password        String    // hashed
   name            String
   role            UserRole  @default(EDITOR)
   avatarUrl       String?   @map("avatar_url")
@@ -51,8 +53,21 @@ model User {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  projects        Project[] // one-to-many (user created projects)
-  teamMembers     TeamMember[] // optional: if team members are also users
+  // --- Authentication Fields ---
+  emailVerified             Boolean   @default(false) @map("email_verified")
+  emailVerificationToken    String?   @unique @map("email_verification_token")
+  emailVerificationExpires  DateTime? @map("email_verification_expires")
+  passwordResetToken        String?   @unique @map("password_reset_token")
+  passwordResetExpires      DateTime? @map("password_reset_expires")
+  loginAttempts             Int       @default(0) @map("login_attempts")
+  lockUntil                 DateTime? @map("lock_until")
+
+  // Relations
+  projects                  Project[]
+  teamMembers               TeamMember[]
+  emailVerificationTokens   EmailVerificationToken[]
+  passwordResetTokens       PasswordResetToken[]
+  loginAttemptsLog          LoginAttempt[]
 
   @@map("users")
 }
@@ -64,13 +79,13 @@ model Project {
   description   String
   status        ProjectStatus @default(START)
   projectType   ProjectType   @default(OTHER) @map("project_type")
-  stage         String?      // e.g., "تصحيح الألوان", "التعديل النهائي"
-  progress      Int          @default(0) // 0-100
+  stage         String?
+  progress      Int          @default(0)
   budget        Float
   deadline      DateTime
   thumbnailUrl  String?      @map("thumbnail_url")
   projectLink   String?      @map("project_link")
-  userId        Int          @map("user_id") // creator/owner
+  userId        Int          @map("user_id")
   createdAt     DateTime     @default(now()) @map("created_at")
   updatedAt     DateTime     @updatedAt @map("updated_at")
   deletedAt     DateTime?    @map("deleted_at") // soft delete
@@ -83,19 +98,19 @@ model Project {
 
 model Request {
   id          Int            @id @default(autoincrement())
-  name        String         // client name
-  type        String         // e.g., "إنتاج وثائقي", "فيديو إعلاني"
+  name        String
+  type        String
   details     String
-  budget      String?        // formatted budget string
+  budget      String?
   location    String?
-  deadline    String?        // can be date or description
+  deadline    String?
   status      RequestStatus  @default(NEW)
-  icon        String         // "person", "business", "movie" (for UI)
+  icon        String         @default("person")
   replied     Boolean        @default(false)
   repliedAt   DateTime?      @map("replied_at")
   createdAt   DateTime       @default(now()) @map("created_at")
   updatedAt   DateTime       @updatedAt @map("updated_at")
-  deletedAt   DateTime?      @map("deleted_at") // soft delete
+  deletedAt   DateTime?      @map("deleted_at")
 
   @@map("requests")
 }
@@ -104,15 +119,55 @@ model TeamMember {
   id        Int      @id @default(autoincrement())
   name      String
   email     String   @unique
-  role      String   // e.g., "محرر فيديو", "مصور سينمائي"
-  avatar    String?  // optional avatar URL
-  skills    String[] // array of skills
+  role      String
+  avatar    String?
+  skills    String[]
   projectId Int      @map("project_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  project   Project  @relation(fields: [projectId], references: [id])
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("team_members")
   users User[]
+}
+
+// -------------------- Authentication Token Models --------------------
+
+model EmailVerificationToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  token     String   @unique // hashed token
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verification_tokens")
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  token     String   @unique // hashed token
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  used      Boolean  @default(false) // prevents reuse
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+model LoginAttempt {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  success   Boolean  @default(false)
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("login_attempts")
 }

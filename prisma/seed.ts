@@ -1,9 +1,9 @@
 // prisma/seed.ts
 import prisma from "@/lib/prisma";
 import { ProjectStatus, ProjectType, RequestStatus, UserRole } from "@prisma/client";
-import { hash } from "bcryptjs"; 
+import { hash } from "bcryptjs";
 
-// Sample data arrays
+// Sample data arrays (keep existing)
 const projectTitles = [
     "إعلان بنك المشرق 2024",
     "فيلم وثائقي: رمال الأمل",
@@ -66,7 +66,6 @@ const stages = [
     "اللمسات الأخيرة",
 ];
 
-// Request/Lead data
 const requestNames = [
     "أحمد العمري",
     "شركة نجد للتطوير",
@@ -114,7 +113,6 @@ const requestStatuses = [
 
 const icons = ["person", "business", "movie"];
 
-// Team member data
 const teamMemberNames = [
     "محمد خالد",
     "أحمد السديري",
@@ -159,80 +157,119 @@ const teamMemberSkills = [
     ["مونتاج", "تلوين"],
 ];
 
-// Helper function to get random item from array
-const randomItem = <T>(items: T[]): T => {
-    return items[Math.floor(Math.random() * items.length)];
-};
+// Helper functions
+const randomItem = <T>(items: T[]): T => items[Math.floor(Math.random() * items.length)];
+const randomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
 
-// Helper function to get random number between min and max
-const randomInt = (min: number, max: number): number => {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-};
-
-// Helper function to get random date within last 6 months
 const randomDate = (): Date => {
     const now = new Date();
     const daysAgo = randomInt(1, 180);
-    const date = new Date(now);
-    date.setDate(date.getDate() - daysAgo);
-    return date;
+    return new Date(now.setDate(now.getDate() - daysAgo));
 };
 
-// Helper function to get random future date (for deadlines)
 const randomFutureDate = (): Date => {
     const now = new Date();
     const daysAhead = randomInt(7, 90);
-    const date = new Date(now);
-    date.setDate(date.getDate() + daysAhead);
-    return date;
+    return new Date(now.setDate(now.getDate() + daysAhead));
 };
 
+// ----- MAIN SEED -----
 async function main() {
     console.log("🌱 Starting database seeding...");
 
-    // Clean up existing data (optional - for development only)
+    // Clean up existing data (for development)
+    await prisma.loginAttempt.deleteMany();
+    await prisma.passwordResetToken.deleteMany();
+    await prisma.emailVerificationToken.deleteMany();
     await prisma.teamMember.deleteMany();
     await prisma.project.deleteMany();
     await prisma.request.deleteMany();
     await prisma.user.deleteMany();
 
-    // 1. Create Admin User
+    console.log("🧹 Cleared existing data.");
+
+    // ===== CREATE USERS =====
+    // 1. Admin (verified)
+    const adminPassword = await hash("Admin@123", 10);
     const admin = await prisma.user.create({
         data: {
             email: "admin@jawedgharab.com",
-            password: await hash("admin123", 10), // will be hashed
+            password: adminPassword,
             name: "أحمد المنصور",
             role: UserRole.ADMIN,
             avatarUrl:
                 "https://lh3.googleusercontent.com/aida-public/AB6AXuB8amvLXePbS1IZORTo1vCf4QByU1UWsK58dHIk4g74Nq74i7cjkDHBViX86MXV7OWQveqkfh1eVU-VXWfuR4SH5ToVNTuG0qtEPZFgwYY7Wi9h2L7a34ZpxhOoF4z1RcumFetArepUdaFbwYLU-pBORnt-kRUbmCUV59jT4d8tKeAlO9keOZICoySEd2KoMn31nKMsYdojAKPUEkuvgax9qFOReIbpdKpnk0QSKguvq6Bedm3FifHoPQ571CBeXk4CcQlINfNJxUo",
             accountStatus: "نشط",
             profileProgress: 80,
+            emailVerified: true,
             lastLogin: new Date(),
         },
     });
+    console.log(`✅ Created admin: ${admin.email} (verified)`);
 
-    console.log(`✅ Created admin user: ${admin.email}`);
+    // 2. Editor (verified)
+    const editorPassword = await hash("Editor@123", 10);
+    const editor = await prisma.user.create({
+        data: {
+            email: "editor@jawedgharab.com",
+            password: editorPassword,
+            name: "سارة الشمري",
+            role: UserRole.EDITOR,
+            avatarUrl: "https://via.placeholder.com/100",
+            accountStatus: "نشط",
+            profileProgress: 65,
+            emailVerified: true,
+            lastLogin: randomDate(),
+        },
+    });
+    console.log(`✅ Created editor: ${editor.email} (verified)`);
 
-    // 2. Create Additional Users (Editors and Directors)
+    // 3. Unverified user (to test email verification)
+    const unverifiedPassword = await hash("Unverified@123", 10);
+    const unverified = await prisma.user.create({
+        data: {
+            email: "unverified@jawedgharab.com",
+            password: unverifiedPassword,
+            name: "مستخدم غير موثق",
+            role: UserRole.VIEWER,
+            accountStatus: "نشط",
+            profileProgress: 20,
+            emailVerified: false,
+            // Create an expired verification token for testing
+            emailVerificationToken: "expired_token_123",
+            emailVerificationExpires: new Date(Date.now() - 24 * 60 * 60 * 1000), // expired 24h ago
+        },
+    });
+    console.log(`✅ Created unverified user: ${unverified.email}`);
+
+    // 4. Additional users (some verified, some not)
     const extraUsers = [];
     for (let i = 0; i < 5; i++) {
+        const isVerified = i % 2 === 0; // alternate
+        const password = await hash(`User@${i}123`, 10);
         const user = await prisma.user.create({
             data: {
                 email: `user${i + 1}@jawedgharab.com`,
-                password: await hash("password123", 10),
-                name: `محرر ${i + 1}`,
+                password,
+                name: `مستخدم ${i + 1}`,
                 role: randomItem([UserRole.EDITOR, UserRole.DIRECTOR, UserRole.VIEWER]),
                 avatarUrl: "https://via.placeholder.com/100",
                 accountStatus: "نشط",
-                profileProgress: randomInt(50, 100),
-                lastLogin: randomDate(),
+                profileProgress: randomInt(30, 90),
+                emailVerified: isVerified,
+                lastLogin: isVerified ? randomDate() : undefined,
+                // Add verification token for unverified users (if any)
+                ...(isVerified ? {} : {
+                    emailVerificationToken: `token_${i}`,
+                    emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // valid for 24h
+                }),
             },
         });
         extraUsers.push(user);
     }
-    console.log(`✅ Created ${extraUsers.length} additional users`);
+    console.log(`✅ Created ${extraUsers.length} extra users`);
 
-    // 3. Create Projects
+    // ===== CREATE PROJECTS =====
     const projects = [];
     for (let i = 0; i < 12; i++) {
         const project = await prisma.project.create({
@@ -246,19 +283,17 @@ async function main() {
                 progress: randomInt(0, 100),
                 budget: randomInt(5000, 50000),
                 deadline: randomFutureDate(),
-                thumbnailUrl:
-                    "https://via.placeholder.com/400x225/2563eb/ffffff?text=MASTERY",
+                thumbnailUrl: "https://via.placeholder.com/400x225/2563eb/ffffff?text=MASTERY",
                 projectLink: `https://example.com/project/${i + 1}`,
-                userId: admin.id,
+                userId: admin.id, // all projects owned by admin for now
                 createdAt: randomDate(),
-                updatedAt: new Date(),
             },
         });
         projects.push(project);
     }
     console.log(`✅ Created ${projects.length} projects`);
 
-    // 4. Create Requests (Leads)
+    // ===== CREATE REQUESTS =====
     const requests = [];
     for (let i = 0; i < 15; i++) {
         const request = await prisma.request.create({
@@ -266,7 +301,7 @@ async function main() {
                 name: requestNames[i % requestNames.length],
                 type: requestTypes[i % requestTypes.length],
                 details: requestDetails[i % requestDetails.length],
-                budget: `٥,٠٠٠ - ١٠,٠٠٠ ريال سعودي`,
+                budget: `${randomInt(5, 20)},${randomInt(0, 9)}00 - ${randomInt(21, 40)},${randomInt(0, 9)}00 ريال سعودي`,
                 location: randomItem(["الرياض", "جدة", "الدمام", "مكة", "المدينة"]),
                 deadline: randomFutureDate().toLocaleDateString("ar-SA"),
                 status: randomItem(requestStatuses),
@@ -274,19 +309,16 @@ async function main() {
                 replied: Math.random() > 0.5,
                 repliedAt: Math.random() > 0.5 ? new Date() : undefined,
                 createdAt: randomDate(),
-                updatedAt: new Date(),
             },
         });
         requests.push(request);
     }
     console.log(`✅ Created ${requests.length} requests`);
 
-    // 5. Create Team Members and assign to projects
+    // ===== CREATE TEAM MEMBERS =====
     const teamMembers = [];
     for (let i = 0; i < 25; i++) {
-        // Randomly assign to a project
         const project = randomItem(projects);
-
         const member = await prisma.teamMember.create({
             data: {
                 name: teamMemberNames[i % teamMemberNames.length],
@@ -296,21 +328,100 @@ async function main() {
                 skills: randomItem(teamMemberSkills),
                 projectId: project.id,
                 createdAt: randomDate(),
-                updatedAt: new Date(),
             },
         });
         teamMembers.push(member);
     }
     console.log(`✅ Created ${teamMembers.length} team members`);
 
-    // 6. Summary
+    // ===== CREATE AUTH TOKENS (for testing) =====
+
+    // 1. Valid email verification token for admin (will be deleted after verification)
+    await prisma.emailVerificationToken.create({
+        data: {
+            userId: admin.id,
+            token: "valid_verification_token_abc123",
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+    });
+    console.log(`✅ Created valid email verification token for admin`);
+
+    // 2. Expired email verification token (for testing expiration)
+    await prisma.emailVerificationToken.create({
+        data: {
+            userId: editor.id,
+            token: "expired_verification_token_xyz789",
+            expiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // expired
+        },
+    });
+    console.log(`✅ Created expired email verification token for editor`);
+
+    // 3. Password reset token (valid)
+    await prisma.passwordResetToken.create({
+        data: {
+            userId: admin.id,
+            token: "valid_password_reset_token_abc123",
+            expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+            used: false,
+        },
+    });
+    console.log(`✅ Created valid password reset token for admin`);
+
+    // 4. Used password reset token (for testing reuse prevention)
+    await prisma.passwordResetToken.create({
+        data: {
+            userId: editor.id,
+            token: "used_password_reset_token_xyz789",
+            expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+            used: true,
+        },
+    });
+    console.log(`✅ Created used password reset token for editor`);
+
+    // ===== CREATE LOGIN ATTEMPTS =====
+    // Some failed login attempts for admin
+    for (let i = 0; i < 3; i++) {
+        await prisma.loginAttempt.create({
+            data: {
+                userId: admin.id,
+                success: false,
+                ipAddress: "192.168.1.1",
+                userAgent: "Mozilla/5.0 (Test)",
+                createdAt: new Date(Date.now() - i * 5 * 60 * 1000), // spaced out
+            },
+        });
+    }
+
+    // One successful login for admin
+    await prisma.loginAttempt.create({
+        data: {
+            userId: admin.id,
+            success: true,
+            ipAddress: "192.168.1.1",
+            userAgent: "Mozilla/5.0 (Test)",
+            createdAt: new Date(Date.now() - 10 * 60 * 1000),
+        },
+    });
+    console.log(`✅ Created login attempts for admin`);
+
+    // ===== SUMMARY =====
     console.log("\n📊 Seeding Summary:");
-    console.log(`- Users: ${1 + extraUsers.length}`);
+    console.log(`- Users (total): ${1 + 1 + 1 + extraUsers.length}`);
+    console.log(`  - Admin (verified): ${admin.email}`);
+    console.log(`  - Editor (verified): ${editor.email}`);
+    console.log(`  - Unverified: ${unverified.email}`);
+    console.log(`  - Extra users: ${extraUsers.length}`);
     console.log(`- Projects: ${projects.length}`);
     console.log(`- Requests: ${requests.length}`);
     console.log(`- Team Members: ${teamMembers.length}`);
+    console.log(`- Auth Tokens: EmailVerification (2), PasswordReset (2)`);
+    console.log(`- Login Attempts: 4`);
 
     console.log("\n✅ Database seeding completed successfully!");
+    console.log("\n🔐 Test Accounts:");
+    console.log(`  Admin:    admin@jawedgharab.com   / Admin@123`);
+    console.log(`  Editor:   editor@jawedgharab.com  / Editor@123`);
+    console.log(`  Unverified: unverified@jawedgharab.com / Unverified@123`);
 }
 
 main()
