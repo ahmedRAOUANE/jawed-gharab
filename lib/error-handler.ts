@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 import { errorResponse } from "./api-response";
+import { AuthError } from "./auth-guard";
 
 /**
  * Centralized error handler for API routes.
@@ -40,6 +41,10 @@ export function handleApiError(error: unknown): ReturnType<typeof errorResponse>
 
   if (error instanceof Prisma.PrismaClientValidationError) {
     return errorResponse("Invalid data provided.", 400);
+  }
+
+  if (error instanceof AuthError) {
+    return errorResponse(error.message, error.status);
   }
 
   // Generic fallback

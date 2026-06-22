@@ -90,3 +90,71 @@ export const CreateProjectSchema = ProjectSchema.omit({ userId: true }).extend({
 });
 
 export const CreateRequestSchema = RequestSchema.omit({ status: true, replied: true, repliedAt: true });
+
+// ==================== AUTHENTICATION SCHEMAS ====================
+
+export const LoginSchema = z.object({
+  email: z.string().email("البريد الإلكتروني غير صالح"),
+  password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
+});
+
+export type LoginInput = z.infer<typeof LoginSchema>;
+
+export const SignupSchema = z
+  .object({
+    name: z.string().min(1, "الاسم مطلوب"),
+    email: z.string().email("البريد الإلكتروني غير صالح"),
+    password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
+    confirmPassword: z.string(),
+    agreeToTerms: z.boolean().refine((val) => val === true, "يجب الموافقة على الشروط والأحكام"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "كلمتا المرور غير متطابقتين",
+    path: ["confirmPassword"],
+  });
+
+export type SignupInput = z.infer<typeof SignupSchema>;
+
+export const ForgotPasswordSchema = z.object({
+  email: z.string().email("البريد الإلكتروني غير صالح"),
+});
+
+export type ForgotPasswordInput = z.infer<typeof ForgotPasswordSchema>;
+
+export const ResetPasswordSchema = z
+  .object({
+    token: z.string().min(1, "الرمز مطلوب"),
+    password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "كلمتا المرور غير متطابقتين",
+    path: ["confirmPassword"],
+  });
+
+export type ResetPasswordInput = z.infer<typeof ResetPasswordSchema>;
+
+export const VerifyEmailSchema = z.object({
+  token: z.string().min(1, "الرمز مطلوب"),
+});
+
+export type VerifyEmailInput = z.infer<typeof VerifyEmailSchema>;
+
+export const ResendVerificationSchema = z.object({
+  email: z.string().email("البريد الإلكتروني غير صالح"),
+});
+
+export type ResendVerificationInput = z.infer<typeof ResendVerificationSchema>;
+
+export const ChangePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(6, "كلمة المرور الحالية مطلوبة"),
+    newPassword: z.string().min(6, "كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل"),
+    confirmNewPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmNewPassword, {
+    message: "كلمتا المرور غير متطابقتين",
+    path: ["confirmNewPassword"],
+  });
+
+export type ChangePasswordInput = z.infer<typeof ChangePasswordSchema>;
