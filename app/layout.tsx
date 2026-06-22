@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro} from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 
 const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-be-vietnam-pro",
@@ -10,7 +11,7 @@ const beVietnamPro = Be_Vietnam_Pro({
 
 export const metadata: Metadata = {
   title: "Djawad GH | محترف مونتاج الفيديو",
-  description: "نقدم تجربة مونتاج سينمائية تضمن أعلى معدلات الاحتفاظ بالجمهور",
+  description: "نقدم تجربة مونتاج سينمائية تضمن أعلى معدلات الاحتفاظ بالجمهور (Retention) وتزيد من تفاعل عملائك من خلال أسلوب سرد قصصي بصري محترف.",
 };
 
 export default function RootLayout({
@@ -20,9 +21,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ar" dir="rtl" className={`${beVietnamPro.variable} h-full antialiased`}>
-      <body className="bg-background text-on-background overflow-x-hidden">
+      <body 
+        className={`${beVietnamPro.variable} antialiased bg-background text-on-background overflow-x-hidden`}
+      >
         <div className="mesh-bg"></div>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

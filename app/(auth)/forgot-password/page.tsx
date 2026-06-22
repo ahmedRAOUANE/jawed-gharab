@@ -1,11 +1,12 @@
-// app/forgot-password/page.tsx
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { FormField } from "@/components/ui/form-field";
 
 export default function ForgotPasswordPage() {
+    const { forgotPassword } = useAuth();
     const [email, setEmail] = useState("");
     const [submitted, setSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -21,14 +22,10 @@ export default function ForgotPasswordPage() {
         setError(null);
 
         try {
-            // Mock password reset request
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            console.log("Password reset requested for:", email);
-            // In the future: POST /api/auth/forgot-password
+            await forgotPassword(email);
             setSubmitted(true);
         } catch (err) {
-            console.log("forget password error: ", err);
-            setError("حدث خطأ. يرجى المحاولة مرة أخرى.");
+            setError(err instanceof Error ? err.message : "حدث خطأ. يرجى المحاولة مرة أخرى.");
         } finally {
             setLoading(false);
         }

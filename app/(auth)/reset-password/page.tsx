@@ -1,10 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { FormField } from "@/components/ui/form-field";
 
 export default function ResetPasswordPage() {
+    const searchParams = useSearchParams();
+    const { resetPassword } = useAuth();
+    const token = searchParams.get("token");
+
     const [formData, setFormData] = useState({
         password: "",
         confirmPassword: "",
@@ -13,9 +19,15 @@ export default function ResetPasswordPage() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
 
-    // In a real app, we'd get the token from the URL query param.
-    // const searchParams = useSearchParams();
-    // const token = searchParams.get('token');
+    useEffect(() => {
+        const ifError = () => {
+            if (!token) {
+                setError("رمز إعادة التعيين غير موجود");
+            }
+        }
+
+        ifError();
+    }, [token]);
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -25,32 +37,26 @@ export default function ResetPasswordPage() {
         setError(null);
     };
 
-    const validate = () => {
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!token) {
+            setError("رمز إعادة التعيين غير موجود");
+            return;
+        }
         if (formData.password.length < 6) {
             setError("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
-            return false;
+            return;
         }
         if (formData.password !== formData.confirmPassword) {
             setError("كلمتا المرور غير متطابقتين");
-            return false;
+            return;
         }
-        return true;
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!validate()) return;
         setLoading(true);
-
         try {
-            // Mock password reset
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            console.log("Password reset confirmed", formData);
-            // In the future: POST /api/auth/reset-password with token and new password
+            await resetPassword(token, formData.password, formData.confirmPassword);
             setSuccess(true);
         } catch (err) {
-            console.log("reset password error: ", err);
-            setError("حدث خطأ. يرجى المحاولة مرة أخرى.");
+            setError(err instanceof Error ? err.message : "حدث خطأ. يرجى المحاولة مرة أخرى.");
         } finally {
             setLoading(false);
         }
@@ -122,7 +128,7 @@ export default function ResetPasswordPage() {
 
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || !token}
                             className="w-full py-4 bg-primary-container text-on-primary-container font-bold rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-60 disabled:hover:scale-100"
                         >
                             {loading ? "جاري التغيير..." : "تغيير كلمة المرور"}

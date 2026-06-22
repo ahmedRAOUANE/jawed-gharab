@@ -1,17 +1,15 @@
-// app/login/page.tsx
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FormField } from "@/components/ui/form-field";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function LoginPage() {
-    const router = useRouter();
+    const { login, loading: authLoading } = useAuth();
     const [formData, setFormData] = useState({
         email: "",
         password: "",
-        confirmPassword: "",
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -33,10 +31,6 @@ export default function LoginPage() {
             setError("كلمة المرور مطلوبة");
             return false;
         }
-        if (formData.password !== formData.confirmPassword) {
-            setError("كلمتا المرور غير متطابقتين");
-            return false;
-        }
         if (formData.password.length < 6) {
             setError("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
             return false;
@@ -50,13 +44,9 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            // Mock login
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            console.log("Login attempt", { email: formData.email, password: formData.password });
-            // In the future: POST /api/auth/login
-            alert("تم تسجيل الدخول بنجاح (محاكاة)");
-            router.push("/admin/overview");
+            await login(formData.email, formData.password);
         } catch (err) {
+            console.log("error logging in: ", err);
             setError("فشل تسجيل الدخول. تحقق من بياناتك.");
         } finally {
             setLoading(false);
@@ -97,16 +87,6 @@ export default function LoginPage() {
                             required
                         />
 
-                        <FormField
-                            label="تأكيد كلمة المرور"
-                            name="confirmPassword"
-                            type="password"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            placeholder="أعد إدخال كلمة المرور"
-                            required
-                        />
-
                         {error && (
                             <div className="p-3 bg-error-container/20 border border-error/30 rounded-xl text-error text-center text-sm">
                                 {error}
@@ -118,7 +98,7 @@ export default function LoginPage() {
                             disabled={loading}
                             className="w-full py-4 bg-primary-container text-on-primary-container font-bold rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-60 disabled:hover:scale-100"
                         >
-                            {loading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
+                            {loading || authLoading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
                         </button>
 
                         <div className="text-center text-sm text-on-surface-variant">

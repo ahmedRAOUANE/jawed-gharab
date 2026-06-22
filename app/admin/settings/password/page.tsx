@@ -1,4 +1,3 @@
-// app/admin/settings/password/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -11,10 +10,11 @@ export default function PasswordSettingsPage() {
     const [formData, setFormData] = useState({
         currentPassword: "",
         newPassword: "",
-        confirmPassword: "",
+        confirmNewPassword: "",
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState(false);
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -33,7 +33,7 @@ export default function PasswordSettingsPage() {
             setError("كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل");
             return false;
         }
-        if (formData.newPassword !== formData.confirmPassword) {
+        if (formData.newPassword !== formData.confirmNewPassword) {
             setError("كلمتا المرور غير متطابقتين");
             return false;
         }
@@ -44,17 +44,28 @@ export default function PasswordSettingsPage() {
         e.preventDefault();
         if (!validate()) return;
         setLoading(true);
+        setSuccess(false);
 
-        // Mock API call
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            // In the future: POST /api/users/password with current and new password
-            console.log("Password change requested", formData);
-            alert("تم تغيير كلمة المرور بنجاح (محاكاة)");
-            router.push("/admin/settings");
+            const res = await fetch("/api/auth/change-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    currentPassword: formData.currentPassword,
+                    newPassword: formData.newPassword,
+                    confirmNewPassword: formData.confirmNewPassword,
+                }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "فشل تغيير كلمة المرور");
+            }
+
+            setSuccess(true);
+            setTimeout(() => router.push("/admin/settings"), 1500);
         } catch (err) {
-            setError("حدث خطأ أثناء تغيير كلمة المرور");
-            console.log("password change error: ", err);
+            setError(err instanceof Error ? err.message : "حدث خطأ أثناء تغيير كلمة المرور");
         } finally {
             setLoading(false);
         }
@@ -95,9 +106,9 @@ export default function PasswordSettingsPage() {
 
                     <FormField
                         label="تأكيد كلمة المرور"
-                        name="confirmPassword"
+                        name="confirmNewPassword"
                         type="password"
-                        value={formData.confirmPassword}
+                        value={formData.confirmNewPassword}
                         onChange={handleChange}
                         placeholder="أعد إدخال كلمة المرور الجديدة"
                         required
@@ -106,6 +117,12 @@ export default function PasswordSettingsPage() {
                     {error && (
                         <div className="p-3 bg-error-container/20 border border-error/30 rounded-xl text-error text-center">
                             {error}
+                        </div>
+                    )}
+
+                    {success && (
+                        <div className="p-3 bg-green-500/20 border border-green-500/30 rounded-xl text-green-400 text-center">
+                            تم تغيير كلمة المرور بنجاح
                         </div>
                     )}
 

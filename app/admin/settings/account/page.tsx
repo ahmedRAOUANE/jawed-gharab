@@ -4,83 +4,55 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { MdSave, MdCancel } from "react-icons/md";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { FormField } from "@/components/ui/form-field";
 import { ImageUpload } from "@/components/ui/image-upload";
-
-// API base URL
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-
-interface UserData {
-    id: number;
-    name: string;
-    email: string;
-    avatarUrl: string;
-    role: string;
-    accountStatus: string;
-    profileProgress: number;
-}
+import { UserUpdateInput } from "@/lib/validation";
 
 export default function AccountSettingsPage() {
     const router = useRouter();
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [formData, setFormData] = useState<Partial<UserData>>({
+    const { user, updateUser, loading: authLoading } = useAuth();
+    const [formData, setFormData] = useState<UserUpdateInput>({
         name: "",
         email: "",
         avatarUrl: "",
     });
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
-    const [avatarPreview, setAvatarPreview] = useState<string>("");
+    const [avatarPreview, setAvatarPreview] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState(false);
 
-    // Fetch user data on mount
+    // Populate form when user data loads
     useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                setLoading(true);
-                const res = await fetch(`${API_BASE}/api/users/me`, {
-                    cache: "no-store",
-                });
-                if (!res.ok) throw new Error("Failed to fetch user data");
-                const data = await res.json();
-                const user = data.data;
+        const updateUser = () => {
+            if (user) {
                 setFormData({
                     name: user.name || "",
                     email: user.email || "",
                     avatarUrl: user.avatarUrl || "",
                 });
                 setAvatarPreview(user.avatarUrl || "");
-                setError(null);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : "حدث خطأ");
-            } finally {
-                setLoading(false);
             }
-        };
+        }
 
-        fetchUser();
-    }, []);
+        updateUser();
+    }, [user]);
 
-    // Handle form field changes
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
-        // If avatarUrl changes, update preview
-        if (name === "avatarUrl") {
-            setAvatarPreview(value);
-        }
+        if (name === "avatarUrl") setAvatarPreview(value);
     };
 
-    // Handle avatar file selection
     const handleAvatarFileChange = (file: File | null) => {
         if (file) {
             setAvatarFile(file);
             const reader = new FileReader();
             reader.onload = () => setAvatarPreview(reader.result as string);
             reader.readAsDataURL(file);
-            // Clear the URL field if a file is selected (we'll use the file)
             setFormData((prev) => ({ ...prev, avatarUrl: "" }));
         } else {
             setAvatarFile(null);
@@ -88,24 +60,20 @@ export default function AccountSettingsPage() {
         }
     };
 
-    // Submit form
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setSaving(true);
+        setLoading(true);
         setError(null);
+        setSuccess(false);
 
         try {
-            // Prepare data for API
-            const updateData: UserData = {
-                ...formData as UserData,
-                name: formData.name || "user",
-                email: formData.email??"",
+            const updateData: UserUpdateInput = {
+                name: formData.name,
+                email: formData.email,
             };
 
-            // If a new avatar file is selected, we need to upload it first.
-            // For simplicity, we'll convert it to base64 and send as avatarUrl.
-            // In production, you'd upload to cloud storage and get a URL.
             if (avatarFile) {
+                // Convert to base64 (for demo; in production, upload to cloud)
                 const reader = new FileReader();
                 const base64 = await new Promise<string>((resolve) => {
                     reader.onload = () => resolve(reader.result as string);
@@ -116,30 +84,17 @@ export default function AccountSettingsPage() {
                 updateData.avatarUrl = formData.avatarUrl;
             }
 
-            // Get user ID (we'll use the one from the fetched data)
-            const userId = 1; // hardcoded for now, but in production we'd get from session or fetch
-
-            const res = await fetch(`${API_BASE}/api/users/${userId}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(updateData),
-            });
-
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error || "Failed to update profile");
-            }
-
-            alert("تم تحديث الملف الشخصي بنجاح");
-            router.push("/admin/settings");
+            await updateUser(updateData);
+            setSuccess(true);
+            setTimeout(() => router.push("/admin/settings"), 1500);
         } catch (err) {
             setError(err instanceof Error ? err.message : "حدث خطأ أثناء الحفظ");
         } finally {
-            setSaving(false);
+            setLoading(false);
         }
     };
 
-    if (loading) {
+    if (authLoading) {
         return (
             <main className="pt-32 pb-40 px-6 md:px-margin-desktop max-w-container-max mx-auto">
                 <div className="flex justify-center items-center h-64">
@@ -151,7 +106,6 @@ export default function AccountSettingsPage() {
 
     return (
         <main className="pt-32 pb-40 px-6 md:px-margin-desktop max-w-container-max mx-auto">
-            {/* Header */}
             <div className="mb-12">
                 <h1 className="font-headline-lg text-headline-lg text-on-background mb-2">
                     إعدادات الحساب
@@ -161,10 +115,9 @@ export default function AccountSettingsPage() {
                 </p>
             </div>
 
-            {/* Form */}
             <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
                 <div className="glass-card p-8 rounded-2xl space-y-6">
-                    {/* Avatar Section */}
+                    {/* Avatar */}
                     <div className="flex flex-col items-center gap-4">
                         <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-primary/30">
                             {avatarPreview ? (
@@ -188,9 +141,6 @@ export default function AccountSettingsPage() {
                                 onChange={handleAvatarFileChange}
                                 label="الصورة الشخصية (اختياري)"
                             />
-                            <p className="text-caption text-on-surface-variant mt-1">
-                                يمكنك رفع صورة جديدة أو إدخال رابط صورة في الحقل أدناه
-                            </p>
                         </div>
 
                         <FormField
@@ -203,7 +153,6 @@ export default function AccountSettingsPage() {
                         />
                     </div>
 
-                    {/* Name */}
                     <FormField
                         label="الاسم الكامل *"
                         name="name"
@@ -214,7 +163,6 @@ export default function AccountSettingsPage() {
                         required
                     />
 
-                    {/* Email */}
                     <FormField
                         label="البريد الإلكتروني *"
                         name="email"
@@ -225,14 +173,18 @@ export default function AccountSettingsPage() {
                         required
                     />
 
-                    {/* Error message */}
                     {error && (
                         <div className="p-3 bg-error-container/20 border border-error/30 rounded-xl text-error text-center">
                             {error}
                         </div>
                     )}
 
-                    {/* Buttons */}
+                    {success && (
+                        <div className="p-3 bg-green-500/20 border border-green-500/30 rounded-xl text-green-400 text-center">
+                            تم تحديث الملف الشخصي بنجاح
+                        </div>
+                    )}
+
                     <div className="flex flex-col sm:flex-row gap-4 justify-end pt-4">
                         <button
                             type="button"
@@ -245,11 +197,11 @@ export default function AccountSettingsPage() {
 
                         <button
                             type="submit"
-                            disabled={saving}
+                            disabled={loading || authLoading}
                             className="flex items-center justify-center gap-2 px-8 py-3 bg-primary-container text-on-primary-container rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-60 disabled:hover:scale-100"
                         >
                             <MdSave size={20} />
-                            <span>{saving ? "جاري الحفظ..." : "حفظ التغييرات"}</span>
+                            <span>{loading || authLoading ? "جاري الحفظ..." : "حفظ التغييرات"}</span>
                         </button>
                     </div>
                 </div>
