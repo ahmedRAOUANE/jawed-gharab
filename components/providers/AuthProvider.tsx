@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const data = await res.json();
         setUser(data.data);
-        router.push("/admin/overview");
+        router.push("/admin/");
     };
 
     const signup = async (data: { name: string; email: string; password: string; confirmPassword: string; agreeToTerms: boolean }) => {
