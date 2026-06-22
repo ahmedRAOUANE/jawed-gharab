@@ -5,6 +5,7 @@ import { CreateProjectSchema, PaginationSchema } from "@/lib/validation";
 import type { Prisma } from "@prisma/client";
 import { ProjectStatus, ProjectType } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth-guard";
 
 export async function GET(request: NextRequest) {
     try {
@@ -78,8 +79,8 @@ export async function POST(request: NextRequest) {
         // Validate with CreateProjectSchema (userId optional, but we'll set a default for now)
         const validatedData = CreateProjectSchema.parse(body);
 
-        // TODO: replace this with session userId when auth is implemented
-        const userId = validatedData.userId || 1; 
+        // extract the user id
+        const {userId} = await requireAuth(request);
 
         // Convert deadline to Date object
         const deadline = new Date(validatedData.deadline);

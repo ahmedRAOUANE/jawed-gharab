@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { handleApiError } from "@/lib/error-handler";
 import { ProjectUpdateSchema } from "@/lib/validation";
+import { requireAuth } from "@/lib/auth-guard";
 
 export async function GET(
     request: NextRequest,
@@ -42,6 +43,13 @@ export async function PUT(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { role } = await requireAuth(request);
+
+        if (role != "admin") {
+            console.log("api/projects/id/route.ts: require admin authorization for updating a project")
+            return errorResponse("require admin authorization for this operation", 400);
+        }
+
         const id = parseInt((await params).id);
         if (isNaN(id)) {
             return errorResponse("Invalid project ID", 400);
@@ -88,6 +96,13 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { role } = await requireAuth(request);
+
+        if (role != "admin") {
+            console.log("api/projects/id/route.ts: require admin authorization for deleting a project")
+            return errorResponse("require admin authorization for this operation", 400);
+        }
+
         const id = parseInt((await params).id);
         if (isNaN(id)) {
             return errorResponse("Invalid project ID", 400);

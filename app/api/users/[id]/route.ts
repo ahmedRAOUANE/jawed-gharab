@@ -9,8 +9,6 @@ export async function PUT(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        console.log("id/PUT have been trigered");
-        
         const id = parseInt((await params).id);
         if (isNaN(id)) {
             return errorResponse("Invalid user ID", 400);

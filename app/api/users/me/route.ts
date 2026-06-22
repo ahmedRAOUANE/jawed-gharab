@@ -1,11 +1,13 @@
+import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { handleApiError } from "@/lib/error-handler";
+import { requireAuth } from "@/lib/auth-guard";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
-        // For now, use a hardcoded user ID (1) until auth is implemented
-        const userId = 1;
+        // Extract userId from JWT
+        const { userId } = await requireAuth(request);
 
         const user = await prisma.user.findUnique({
             where: { id: userId },
@@ -18,6 +20,7 @@ export async function GET() {
                 accountStatus: true,
                 profileProgress: true,
                 lastLogin: true,
+                emailVerified: true,
                 createdAt: true,
                 updatedAt: true,
             },
@@ -27,7 +30,7 @@ export async function GET() {
             return errorResponse("User not found", 404);
         }
 
-        return successResponse(200, user, "تم جلب بيانات المستخدم");
+        return successResponse(200, user, "تم جلب الملف الشخصي بنجاح");
     } catch (error) {
         return handleApiError(error);
     }

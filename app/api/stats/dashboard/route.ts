@@ -1,9 +1,18 @@
 import prisma from "@/lib/prisma";
-import { successResponse } from "@/lib/api-response";
+import { errorResponse, successResponse } from "@/lib/api-response";
 import { handleApiError } from "@/lib/error-handler";
+import { requireAuth } from "@/lib/auth-guard";
+import { NextRequest } from "next/server";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
+        const { role } = await requireAuth(request);
+
+        if (role != "admin") {
+            console.log("api/stats/dashboard/route.ts: require admin authorization for revealing this data")
+            return errorResponse("these are admin only informations", 400);
+        }
+        
         // Get counts
         const [activeProjects, newRequests, totalViews] = await Promise.all([
             prisma.project.count({

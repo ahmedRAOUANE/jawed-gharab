@@ -3,12 +3,20 @@ import prisma from "@/lib/prisma";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { handleApiError } from "@/lib/error-handler";
 import { TeamMemberSchema } from "@/lib/validation";
+import { requireAuth } from "@/lib/auth-guard";
 
 export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { role } = await requireAuth(request);
+
+        if (role != "admin") {
+            console.log("api/projects/id/team/route.ts: require admin authorization for adding a team member")
+            return errorResponse("require admin authorization for this operation", 400);
+        }
+        
         const projectId = parseInt((await params).id);
         if (isNaN(projectId)) {
             return errorResponse("Invalid project ID", 400);
@@ -25,13 +33,13 @@ export async function POST(
         const body = await request.json();
         // Validate with TeamMemberSchema (it expects projectId, but we take from URL)
         // We'll omit projectId from body and use the URL param
-        const { projectId: _, ...memberData } = body;
-        const validatedData = TeamMemberSchema.omit({ projectId: true }).parse(memberData);
+        const memberData = body;
+        const validatedData = TeamMemberSchema.omit({ projectId: true }).parse({ projectId, ...memberData });
 
         const teamMember = await prisma.teamMember.create({
             data: {
                 ...validatedData,
-                projectId: projectId,
+                projectId,
             },
         });
 
@@ -46,6 +54,13 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { role } = await requireAuth(request);
+
+        if (role != "admin") {
+            console.log("api/projects/id/team/route.ts: require admin authorization for deleting a team member")
+            return errorResponse("require admin authorization for this operation", 400);
+        }
+
         const projectId = parseInt((await params).id);
         if (isNaN(projectId)) {
             return errorResponse("Invalid project ID", 400);
