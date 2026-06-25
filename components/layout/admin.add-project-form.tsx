@@ -163,27 +163,6 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
             }
 
             await response.json();
-            // const createdProject = result.data;
-
-            // If there are team members, add them
-            // if (formData.teamMembers.length > 0 && createdProject.id) {
-            //     // Add each team member
-            //     for (const memberName of formData.teamMembers) {
-            //         try {
-            //             await fetch(`${API_BASE}/api/projects/${createdProject.id}/team`, {
-            //                 method: "POST",
-            //                 headers: { "Content-Type": "application/json" },
-            //                 body: JSON.stringify({
-            //                     name: memberName,
-            //                     email: `${memberName.replace(/\s/g, "").toLowerCase()}@placeholder.com`,
-            //                     role: "عضو فريق",
-            //                 }),
-            //             });
-            //         } catch (err) {
-            //             console.error("Failed to add team member:", err);
-            //         }
-            //     }
-            // }
 
             alert(mode === "create" ? "تم إضافة المشروع بنجاح" : "تم تحديث المشروع بنجاح");
             router.push("/admin/project-management");

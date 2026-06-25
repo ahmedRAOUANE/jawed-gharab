@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { successResponse } from "@/lib/api-response";
 import { handleApiError } from "@/lib/error-handler";
-import { CreateProjectSchema, PaginationSchema, ProjectDisplaySchema } from "@/lib/validation";
+import { AdminProjectDisplayOverviewSchema, PaginationSchema, projectCreateSchema } from "@/lib/validation";
 import type { Prisma } from "@prisma/client";
 import { ProjectStatus, ProjectType } from "@prisma/client";
 import prisma from "@/lib/prisma";
@@ -47,14 +47,11 @@ export async function GET(request: NextRequest) {
                 skip,
                 take: limit,
                 orderBy: { createdAt: "desc" },
-                include: {
-                    teamMembers: true,
-                },
             }),
             prisma.project.count({ where }),
         ]);
 
-        const validatedProjects = ProjectDisplaySchema.array().safeParse(projects);
+        const validatedProjects = AdminProjectDisplayOverviewSchema.array().safeParse(projects);
 
         return successResponse(
             200,
@@ -76,7 +73,7 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
 
         // Validate with CreateProjectSchema (userId optional, but we'll set a default for now)
-        const validatedData = CreateProjectSchema.parse(body);
+        const validatedData = projectCreateSchema.parse(body);
 
         // extract the user id
         const {userId} = await requireAuth(request);

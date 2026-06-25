@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { handleApiError } from "@/lib/error-handler";
-import { RequestStatusSchema } from "@/lib/validation";
+import { RequestSchema } from "@/lib/validation";
 
 export async function PATCH(
     request: NextRequest,
@@ -15,7 +15,7 @@ export async function PATCH(
         }
 
         const body = await request.json();
-        const { status } = RequestStatusSchema.parse(body);
+        const { status } = RequestSchema.pick({status: true}).parse(body);
 
         // Check if request exists and not deleted
         const existing = await prisma.request.findFirst({

@@ -33,6 +33,10 @@ export const AdminProjectDisplayDetailSchema = ProjectSchema.omit({
 export type AdminProjectDetailed = z.infer<typeof AdminProjectDisplayDetailSchema>
 
 export const AdminProjectDisplayOverviewSchema = ProjectSchema.omit({
+  client: true,
+  stage: true,
+  budget: true,
+  deadline: true,
   userId: true,
 })
 

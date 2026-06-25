@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { successResponse } from "@/lib/api-response";
 import { handleApiError } from "@/lib/error-handler";
-import { CreateRequestSchema, PaginationSchema } from "@/lib/validation";
+import { PaginationSchema, RequestCreateSchema } from "@/lib/validation";
 import type { Prisma } from "@prisma/client";
 import { RequestStatus } from "@prisma/client";
 
@@ -70,14 +70,13 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
 
         // Validate with CreateRequestSchema
-        const validatedData = CreateRequestSchema.parse(body);
+        const validatedData = RequestCreateSchema.parse(body);
 
         const requestData = await prisma.request.create({
             data: {
                 ...validatedData,
                 deadline: validatedData.deadline,
-                status: "NEW", // default
-                replied: false,
+                status: RequestStatus.NEW, // default
                 // icon is already in validatedData, default "person"
             },
         });

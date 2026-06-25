@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { handleApiError } from "@/lib/error-handler";
-import { PaginationSchema } from "@/lib/validation";
+import { AdminProjectDisplayOverviewSchema, PaginationSchema } from "@/lib/validation";
 import { Prisma, ProjectStatus, ProjectType } from "@prisma/client";
 
 export async function GET(
@@ -61,16 +61,24 @@ export async function GET(
                 skip,
                 take: limit,
                 orderBy: { createdAt: "desc" },
-                include: {
-                    teamMembers: true,
-                },
+                select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    status: true,
+                    progress: true,
+                    thumbnailUrl: true,
+                    projectLink: true,
+                }
             }),
             prisma.project.count({ where }),
         ]);
 
+        const validatedProjects = AdminProjectDisplayOverviewSchema.array().safeParse(projects);
+
         return successResponse(
             200,
-            projects,
+            validatedProjects.data,
             "تم جلب مشاريع المستخدم",
             { page, limit, total }
         );
