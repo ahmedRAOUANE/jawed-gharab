@@ -15,6 +15,7 @@ enum ProjectStatus {
   EDITING    // قيد المونتاج
   REVIEW     // في انتظار المراجعة
   DELIVERED  // تم التسليم
+  ACTIVE     // نشط 
 }
 
 enum ProjectType {
@@ -29,6 +30,12 @@ enum RequestStatus {
   NEW        // جديد
   PENDING    // قيد الانتظار
   CONTACTED  // تم التواصل
+}
+
+enum RequestIcon {
+  person
+  business
+  movie
 }
 
 enum UserRole {
@@ -103,7 +110,7 @@ model Request {
   location    String?
   deadline    String?
   status      RequestStatus  @default(NEW)
-  icon        String         @default("person")
+  icon        RequestIcon    @default(person)
   replied     Boolean        @default(false)
   repliedAt   DateTime?      @map("replied_at")
   createdAt   DateTime       @default(now()) @map("created_at")

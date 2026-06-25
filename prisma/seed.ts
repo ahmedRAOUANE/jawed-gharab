@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { ProjectStatus, ProjectType, RequestStatus, UserRole } from "@prisma/client";
+import { ProjectStatus, ProjectType, RequestIcon, RequestStatus, UserRole } from "@prisma/client";
 import { hash } from "bcryptjs";
 
 // Sample data arrays (keep existing)
@@ -47,6 +47,7 @@ const statuses = [
     ProjectStatus.EDITING,
     ProjectStatus.REVIEW,
     ProjectStatus.DELIVERED,
+    ProjectStatus.ACTIVE,
 ];
 
 const projectTypes = [
@@ -110,7 +111,7 @@ const requestStatuses = [
     RequestStatus.CONTACTED,
 ];
 
-const icons = ["person", "business", "movie"];
+const icons = Object.values(RequestIcon);
 
 // Helper functions
 const randomItem = <T>(items: T[]): T => items[Math.floor(Math.random() * items.length)];

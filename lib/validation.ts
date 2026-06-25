@@ -1,17 +1,5 @@
+import { ProjectStatus, ProjectType, RequestIcon, RequestStatus, UserRole } from "@prisma/client";
 import { z } from "zod";
-
-// TeamMember validation
-export const TeamMemberSchema = z.object({
-  id: z.number(),
-  name: z.string().min(1, "الاسم مطلوب"),
-  email: z.email("بريد إلكتروني غير صالح"),
-  role: z.string().min(1, "الدور مطلوب"),
-  avatar: z.string().url().optional(),
-  skills: z.array(z.string()).optional(),
-  projectId: z.number().int().positive("معرف المشروع مطلوب"),
-});
-
-export type TeamMemberInput = z.infer<typeof TeamMemberSchema>;
 
 // Project validation
 export const ProjectSchema = z.object({
@@ -19,70 +7,85 @@ export const ProjectSchema = z.object({
   title: z.string().min(1, "العنوان مطلوب"),
   client: z.string().min(1, "اسم العميل مطلوب"),
   description: z.string().min(1, "الوصف مطلوب"),
-  status: z.enum(["START", "EDITING", "REVIEW", "DELIVERED"]).default("START"),
-  statusType: z.enum(["active", "review", "start", "editing", "delivered"]).default("start"),
-  projectType: z.enum(["COMMERCIAL", "DOCUMENTARY", "MOTION_GRAPHICS", "MUSIC_VIDEO", "OTHER"]).default("OTHER"),
+  status: z.enum(ProjectStatus).default(ProjectStatus.START),
+  projectType: z.enum(ProjectType).default(ProjectType.OTHER), 
   stage: z.string().optional(),
   progress: z.number().int().min(0).max(100).default(0),
   budget: z.number().positive("الميزانية يجب أن تكون رقمًا موجبًا"),
   deadline: z.iso.datetime({ offset: true }).or(z.date()), // ISO string or Date
   thumbnailUrl: z.url().optional(),
-  projectLink: z.string().url().optional(),
+  projectLink: z.url().optional(),
   userId: z.number().int().positive("معرف المستخدم مطلوب"),
-  teamMembers: TeamMemberSchema.array(),
-  teamMembersIDs: z.array(z.number())
 });
 
-export const projectInputSchema = ProjectSchema.omit({ id: true, userId: true, teamMembers: true});
+export const projectCreateSchema = ProjectSchema.omit({ id: true, userId: true });
 
-export type ProjectInput = z.infer<typeof projectInputSchema>;
+export type ProjectCreateInput = z.infer<typeof projectCreateSchema>;
 
-// Project update (partial)
-export const ProjectUpdateSchema = ProjectSchema.omit({ id: true, userId: true, teamMembers: true }).partial();
+export const ProjectUpdateSchema = ProjectSchema.omit({ userId: true  }).partial();
 
 export type ProjectUpdateInput = z.infer<typeof ProjectUpdateSchema>;
 
-export const ProjectDisplaySchema = ProjectSchema.omit({
-  client: true,
-  budget: true,
-  deadline: true,
+export const AdminProjectDisplayDetailSchema = ProjectSchema.omit({
   userId: true,
-  teamMembersIDs: true
 })
 
-export type Project = z.infer<typeof ProjectDisplaySchema>
+export type AdminProjectDetailed = z.infer<typeof AdminProjectDisplayDetailSchema>
+
+export const AdminProjectDisplayOverviewSchema = ProjectSchema.omit({
+  userId: true,
+})
+
+export type AdminProjectOverview = z.infer<typeof AdminProjectDisplayOverviewSchema>
+
+export const ProjectPublicDisplaySchema = ProjectSchema.omit({
+  client: true,
+  budget: true,
+  status: true,
+  stage: true,
+  progress: true,
+  deadline: true,
+  userId: true,
+})
+
+export type PublicProject = z.infer<typeof ProjectPublicDisplaySchema>
 
 // Request (Lead) validation
 export const RequestSchema = z.object({
+  id: z.number(),
   name: z.string().min(1, "الاسم مطلوب"),
   type: z.string().min(1, "نوع الطلب مطلوب"),
   details: z.string().min(1, "التفاصيل مطلوبة"),
   budget: z.string().optional(),
   location: z.string().optional(),
   deadline: z.string().optional(),
-  status: z.enum(["NEW", "PENDING", "CONTACTED"]).default("NEW"),
-  icon: z.enum(["person", "business", "movie"]).default("person"),
+  icon: z.enum(RequestIcon).default(RequestIcon.person),
+  status: z.enum(RequestStatus).default(RequestStatus.NEW),
   replied: z.boolean().default(false),
   repliedAt: z.date()
 });
 
-export type RequestInput = z.infer<typeof RequestSchema>;
+export const RequestCreateSchema = RequestSchema.omit({
+  replied: true,
+  repliedAt: true,
+})
 
-export const RequestUpdateSchema = RequestSchema.partial();
+export type RequestCreateInput = z.infer<typeof RequestCreateSchema>;
+
+export const RequestUpdateSchema = RequestSchema.pick({
+  status: true,
+  replied: true,
+  repliedAt: true,
+});
 
 export type RequestUpdateInput = z.infer<typeof RequestUpdateSchema>;
-
-// Status update for request
-export const RequestStatusSchema = z.object({
-  status: z.enum(["NEW", "PENDING", "CONTACTED"]),
-});
 
 // User profile update
 export const UserUpdateSchema = z.object({
   name: z.string().min(1).optional(),
   email: z.email().optional(),
   avatarUrl: z.url().optional(),
-  role: z.enum(["ADMIN", "DIRECTOR", "EDITOR", "VIEWER"]).optional(),
+  role: z.enum(UserRole).optional(),
   accountStatus: z.string().optional(),
   profileProgress: z.number().int().min(0).max(100).optional(),
 });
@@ -99,14 +102,6 @@ export const PaginationSchema = z.object({
 });
 
 export type PaginationInput = z.infer<typeof PaginationSchema>;
-
-// Combined schemas for specific endpoints
-export const CreateProjectSchema = ProjectSchema.omit({ userId: true }).extend({
-  // we'll get userId from session later, but for now we'll keep it optional in body
-  userId: z.number().int().positive().optional(),
-});
-
-export const CreateRequestSchema = RequestSchema.omit({ status: true, replied: true, repliedAt: true });
 
 // ==================== AUTHENTICATION SCHEMAS ====================
 
