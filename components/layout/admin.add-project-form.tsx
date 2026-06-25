@@ -1,29 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { SubmitEventHandler, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MdSave, MdCancel } from "react-icons/md";
 import { FormField } from "../ui/form-field";
-import { ProjectInput, ProjectUpdateInput } from "@/lib/validation";
+import { ProjectCreateInput, ProjectUpdateInput } from "@/lib/validation";
 import { ProjectStatus, ProjectType } from "@prisma/client";
 
 // API base URL
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-
-// Types
-// interface ProjectData {
-//     id?: string;
-//     title: string;
-//     client: string;
-//     description: string;
-//     status: string;
-//     projectType: string;
-//     team: string[];
-//     deadline: string;
-//     budget: number | "";
-//     thumbnail: string | File;
-//     projectLink?: string;
-// }
 
 interface ProjectFormProps {
     mode: "create" | "edit";
@@ -32,7 +17,7 @@ interface ProjectFormProps {
 }
 
 // Map UI status to API enum
-const mapStatusToAPI = (status: string): ProjectStatus => {
+const mapStatusToAPI = (status: ProjectStatus = "ACTIVE"): ProjectStatus => {
     const map: Record<string, ProjectStatus> = {
         "بدء العمل": "START",
         "قيد المونتاج": "EDITING",
@@ -42,7 +27,7 @@ const mapStatusToAPI = (status: string): ProjectStatus => {
     return map[status] || "START";
 };
 
-const mapTypeToAPI = (type: string): ProjectType => {
+const mapTypeToAPI = (type: ProjectType = "COMMERCIAL"): ProjectType => {
     const map: Record<string, ProjectType> = {
         "إعلان": "COMMERCIAL",
         "وثائقي": "DOCUMENTARY",
@@ -77,15 +62,14 @@ const mapTypeToAPI = (type: string): ProjectType => {
 
 export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormProps) => {
     const router = useRouter();
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<ProjectUpdateInput>({
         title: initialData.title || "",
         client: initialData.client || "",
         description: initialData.description || "",
         status: initialData.status || "START",
         projectType: initialData.projectType || "COMMERCIAL",
-        teamMembers: [],
         deadline: initialData.deadline || "",
-        budget: initialData.budget || "",
+        budget: initialData.budget,
         thumbnailUrl: initialData.thumbnailUrl || "",
         projectLink: initialData.projectLink || "",
     });
@@ -129,9 +113,9 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
 
     const validate = () => {
         const newErrors: Record<string, string> = {};
-        if (!formData.title.trim()) newErrors.title = "عنوان المشروع مطلوب";
-        if (!formData.client.trim()) newErrors.client = "اسم العميل مطلوب";
-        if (!formData.description.trim()) newErrors.description = "الوصف مطلوب";
+        if (formData.title && !formData.title.trim()) newErrors.title = "عنوان المشروع مطلوب";
+        if (formData.client && !formData.client.trim()) newErrors.client = "اسم العميل مطلوب";
+        if (formData.description && !formData.description.trim()) newErrors.description = "الوصف مطلوب";
         if (!formData.status) newErrors.status = "الحالة مطلوبة";
         if (!formData.deadline) newErrors.deadline = "تاريخ التسليم مطلوب";
         if (!formData.budget && formData.budget !== 0) newErrors.budget = "الميزانية مطلوبة";
@@ -139,7 +123,7 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (e) => {
         e.preventDefault();
         if (!validate()) return;
 
@@ -148,7 +132,7 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
 
         try {
             // Prepare payload
-            const payload: ProjectInput = {
+            const payload: ProjectCreateInput | ProjectUpdateInput = {
                 title: formData.title,
                 client: formData.client,
                 description: formData.description,
@@ -157,29 +141,9 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
                 stage: "مرحلة غير محددة", // we can allow a stage field later
                 progress: 0, // default
                 budget: Number(formData.budget),
-                deadline: new Date(formData.deadline).toISOString(),
-                projectLink: formData.projectLink || "",
-                statusType: mapStatusToAPI(formData.status) as ProjectInput["statusType"] || "active",
-                teamMembersIDs: []
-                // userId: 1, // we'll set a default or get from session later
+                deadline: formData.deadline,
+                projectLink: formData.projectLink,
             };
-
-            // Handle thumbnail: if it's a File, convert to base64
-            // if (formData.thumbnail instanceof File) {
-            //     // For simplicity, we'll skip file upload and just use a placeholder.
-            //     // In production, you'd upload to a cloud service and get a URL.
-            //     // For now, we'll just use a placeholder.
-            //     payload.thumbnailUrl = "https://via.placeholder.com/400x225/2563eb/ffffff?text=MASTERY";
-            // } else if (typeof formData.thumbnail === "string" && formData.thumbnail) {
-            //     payload.thumbnailUrl = formData.thumbnail;
-            // } else {
-            //     payload.thumbnailUrl = "https://via.placeholder.com/400x225/2563eb/ffffff?text=MASTERY";
-            // }
-
-            // For team members, we'll add them as separate API calls or include in the project creation.
-            // Since the API doesn't have a field for team members in the project creation,
-            // we'll handle team members separately. For now, we'll ignore the team field.
-            // Later we can implement team member creation.
 
             const url = mode === "create"
                 ? `${API_BASE}/api/projects`
@@ -327,19 +291,6 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
                         error={errors.budget}
                     />
                 </div>
-
-                {/* <TeamMembersInput
-                    value={formData.teamMembersIDs[]}
-                    onChange={handleTeamChange}
-                    label="فريق العمل"
-                    placeholder="أضف اسم عضو ثم اضغط Enter"
-                /> */}
-
-                {/* <ImageUpload
-                    value={formData.thumbnail}
-                    onChange={handleThumbnailChange}
-                    label="الصورة المصغرة"
-                /> */}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-end">

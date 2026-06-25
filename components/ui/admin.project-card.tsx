@@ -1,16 +1,16 @@
+import { AdminProjectOverview } from "@/lib/validation";
 import Image from "next/image";
-import { Project } from "@/lib/validation";
 import Link from "next/link";
 
 const statusStyles = {
-    active: "bg-primary-container text-on-primary-container",
-    review: "bg-tertiary-container text-on-tertiary-container",
-    start: "bg-secondary-container text-on-secondary-container",
-    editing: "bg-secondary-container text-on-secondary-container",
-    delivered: "bg-secondary-container text-on-secondary-container",
+    ACTIVE: "bg-primary-container text-on-primary-container",
+    REVIEW: "bg-tertiary-container text-on-tertiary-container",
+    START: "bg-secondary-container text-on-secondary-container",
+    EDITING: "bg-secondary-container text-on-secondary-container",
+    DELIVERED: "bg-secondary-container text-on-secondary-container",
 };
 
-export const ProjectCard = ({ project, className, largeImg }: { project: Project, className?: string, largeImg?: boolean }) => {
+export const ProjectCard = ({ project, className, largeImg }: { project: AdminProjectOverview, className?: string, largeImg?: boolean }) => {
     return (
         <Link href={`project-management/${project.id}`} className={`glass-card p-4 rounded-xl flex items-center gap-6 ${className}`}>
             <div className={`h-24 rounded-lg overflow-hidden bg-surface-variant ${largeImg ? "w-full" : ""}`}>
@@ -30,7 +30,7 @@ export const ProjectCard = ({ project, className, largeImg }: { project: Project
                 <div className="flex justify-between items-start mb-2">
                     <h4 className="font-body-lg text-body-lg font-bold">{project.title}</h4>
                     <span
-                        className={`px-3 py-1 text-xs rounded-full font-label-md ${statusStyles[project.statusType]}`}
+                        className={`px-3 py-1 text-xs rounded-full font-label-md ${statusStyles[project.status]}`}
                     >
                         {project.status}
                     </span>
