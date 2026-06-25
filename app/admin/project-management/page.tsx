@@ -4,9 +4,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AddProjectButton } from "@/components/layout/admin.add-project-btn";
-import { Project, ProjectCard } from "@/components/ui/admin.project-card";
+import { ProjectCard } from "@/components/ui/admin.project-card";
 import { SearchFilterBar } from "@/components/ui/admin.seachfilterbar";
 import { StatsCard } from "@/components/ui/admin.stats-card";
+import { Project } from "@/lib/validation";
+import { ProjectCardSkeleton } from "@/components/ui/project-card-skeleton";
 
 // API base URL
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
@@ -87,17 +89,12 @@ export default function ProjectManagementPage() {
             const mappedProjects: Project[] = data.data.map((p: Project) => ({
                 id: p.id,
                 title: p.title,
-                client: p.client,
                 status: mapStatusText(p.status),
                 statusType: mapStatus(p.status),
                 stage: p.stage || "مرحلة غير محددة",
                 progress: p.progress,
-                lastUpdated: new Date(p.lastUpdated!).toLocaleDateString("ar-SA"),
-                imageUrl: p.imageUrl || "https://via.placeholder.com/400x225/2563eb/ffffff?text=MASTERY",
-                team: p.team?.map((tm) => ({
-                    initials: tm.initials.charAt(0).toUpperCase(),
-                    bgColor: "bg-surface-variant",
-                })) || [],
+                thumbnailUrl: p.thumbnailUrl || "https://via.placeholder.com/400x225/2563eb/ffffff?text=MASTERY",
+                teamMembers: p.teamMembers,
             }));
 
             setProjects(mappedProjects);
@@ -170,8 +167,10 @@ export default function ProjectManagementPage() {
 
             {/* Projects Grid */}
             {loading ? (
-                <div className="flex justify-center items-center h-64">
-                    <div className="text-primary text-xl">جاري التحميل...</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <ProjectCardSkeleton key={i} />
+                    ))}
                 </div>
             ) : error ? (
                 <div className="text-error text-center p-8 glass-card rounded-2xl">
@@ -189,37 +188,36 @@ export default function ProjectManagementPage() {
                     <p className="text-on-surface-variant text-lg">لا توجد مشاريع مطابقة للبحث</p>
                 </div>
             ) : (
-                <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {projects.map((project) => (
-                            <ProjectCard key={project.id} project={project} className="flex-col" largeImg />
-                        ))}
-                    </div>
-                    {/* Pagination (simple) */}
-                    {total > limit && (
-                        <div className="flex justify-center gap-2 mt-8">
-                            <button
-                                type="button"
-                                onClick={() => setPage(p => Math.max(1, p - 1))}
-                                disabled={page === 1}
-                                className="cursor-pointer px-4 py-2 glass-card rounded-lg disabled:opacity-50"
-                            >
-                                السابق
-                            </button>
-                            <span className="px-4 py-2">
-                                صفحة {page} من {Math.ceil(total / limit)}
-                            </span>
-                            <button
-                                type="button"
-                                onClick={() => setPage(p => p + 1)}
-                                disabled={page >= Math.ceil(total / limit)}
-                                className="cursor-pointer px-4 py-2 glass-card rounded-lg disabled:opacity-50"
-                            >
-                                التالي
-                            </button>
-                        </div>
-                    )}
-                </>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {projects.map((project) => (
+                        <ProjectCard key={project.id} project={project} className="flex-col" largeImg />
+                    ))}
+                </div>
+            )}
+
+            {/* Pagination (simple) */}
+            {total > limit && (
+                <div className="flex justify-center gap-2 mt-8">
+                    <button
+                        type="button"
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="cursor-pointer px-4 py-2 glass-card rounded-lg disabled:opacity-50"
+                    >
+                        السابق
+                    </button>
+                    <span className="px-4 py-2">
+                        صفحة {page} من {Math.ceil(total / limit)}
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => setPage(p => p + 1)}
+                        disabled={page >= Math.ceil(total / limit)}
+                        className="cursor-pointer px-4 py-2 glass-card rounded-lg disabled:opacity-50"
+                    >
+                        التالي
+                    </button>
+                </div>
             )}
 
             {/* Floating Action Button */}

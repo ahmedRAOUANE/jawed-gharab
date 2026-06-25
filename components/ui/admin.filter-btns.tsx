@@ -15,7 +15,7 @@ export const FilterButtons = ({ activeFilter, onFilterChange }: FilterButtonsPro
                     type="button"
                     key={filter}
                     onClick={() => onFilterChange(filter)}
-                    className={`px-6 py-2 rounded-full text-label-md transition-all active:scale-95 ${activeFilter === filter
+                    className={`cursor-pointer px-6 py-2 rounded-full text-label-md transition-all active:scale-95 ${activeFilter === filter
                             ? "bg-primary-container text-on-primary-container"
                             : "glass-card text-on-surface-variant hover:text-primary"
                         }`}

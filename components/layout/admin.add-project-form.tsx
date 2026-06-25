@@ -1,35 +1,33 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MdSave, MdCancel } from "react-icons/md";
 import { FormField } from "../ui/form-field";
-import { ImageUpload } from "../ui/image-upload";
-import { TeamMembersInput } from "../ui/team-member-input";
-import { ProjectInput } from "@/lib/validation";
+import { ProjectInput, ProjectUpdateInput } from "@/lib/validation";
 import { ProjectStatus, ProjectType } from "@prisma/client";
 
 // API base URL
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 // Types
-interface ProjectData {
-    id?: string;
-    title: string;
-    client: string;
-    description: string;
-    status: string;
-    projectType: string;
-    team: string[];
-    deadline: string;
-    budget: number | "";
-    thumbnail: string | File;
-    projectLink?: string;
-}
+// interface ProjectData {
+//     id?: string;
+//     title: string;
+//     client: string;
+//     description: string;
+//     status: string;
+//     projectType: string;
+//     team: string[];
+//     deadline: string;
+//     budget: number | "";
+//     thumbnail: string | File;
+//     projectLink?: string;
+// }
 
 interface ProjectFormProps {
     mode: "create" | "edit";
-    initialData?: Partial<ProjectData>;
+    initialData?: Partial<ProjectUpdateInput>;
     projectId?: string; // for edit mode
 }
 
@@ -56,39 +54,39 @@ const mapTypeToAPI = (type: string): ProjectType => {
 };
 
 // Map API status to UI
-const mapStatusToUI = (status: ProjectStatus): string => {
-    const map: Record<ProjectStatus, string> = {
-        "START": "بدء العمل",
-        "EDITING": "قيد المونتاج",
-        "REVIEW": "في انتظار المراجعة",
-        "DELIVERED": "تم التسليم",
-    };
-    return map[status] || "بدء العمل";
-};
+// const mapStatusToUI = (status: ProjectStatus): string => {
+//     const map: Record<ProjectStatus, string> = {
+//         "START": "بدء العمل",
+//         "EDITING": "قيد المونتاج",
+//         "REVIEW": "في انتظار المراجعة",
+//         "DELIVERED": "تم التسليم",
+//     };
+//     return map[status] || "بدء العمل";
+// };
 
-const mapTypeToUI = (type: string): string => {
-    const map: Record<string, string> = {
-        "COMMERCIAL": "إعلان",
-        "DOCUMENTARY": "وثائقي",
-        "MOTION_GRAPHICS": "موشن جرافيك",
-        "MUSIC_VIDEO": "فيديو موسيقي",
-        "OTHER": "أخرى",
-    };
-    return map[type] || "أخرى";
-};
+// const mapTypeToUI = (type: string): string => {
+//     const map: Record<string, string> = {
+//         "COMMERCIAL": "إعلان",
+//         "DOCUMENTARY": "وثائقي",
+//         "MOTION_GRAPHICS": "موشن جرافيك",
+//         "MUSIC_VIDEO": "فيديو موسيقي",
+//         "OTHER": "أخرى",
+//     };
+//     return map[type] || "أخرى";
+// };
 
 export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormProps) => {
     const router = useRouter();
-    const [formData, setFormData] = useState<ProjectData>({
+    const [formData, setFormData] = useState({
         title: initialData.title || "",
         client: initialData.client || "",
         description: initialData.description || "",
-        status: initialData.status || "بدء العمل",
-        projectType: initialData.projectType || "إعلان",
-        team: initialData.team || [],
+        status: initialData.status || "START",
+        projectType: initialData.projectType || "COMMERCIAL",
+        teamMembers: [],
         deadline: initialData.deadline || "",
         budget: initialData.budget || "",
-        thumbnail: initialData.thumbnail || "",
+        thumbnailUrl: initialData.thumbnailUrl || "",
         projectLink: initialData.projectLink || "",
     });
     const [loading, setLoading] = useState(false);
@@ -121,13 +119,13 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
         setSubmitError(null);
     };
 
-    const handleTeamChange = (team: string[]) => {
-        setFormData((prev) => ({ ...prev, team }));
-    };
+    // const handleTeamChange = (team: string[]) => {
+    //     setFormData((prev) => ({ ...prev, team }));
+    // };
 
-    const handleThumbnailChange = (file: File | null) => {
-        setFormData((prev) => ({ ...prev, thumbnail: file || "" }));
-    };
+    // const handleThumbnailChange = (file: File | null) => {
+    //     setFormData((prev) => ({ ...prev, thumbnail: file || "" }));
+    // };
 
     const validate = () => {
         const newErrors: Record<string, string> = {};
@@ -161,20 +159,22 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
                 budget: Number(formData.budget),
                 deadline: new Date(formData.deadline).toISOString(),
                 projectLink: formData.projectLink || "",
-                userId: 1, // we'll set a default or get from session later
+                statusType: mapStatusToAPI(formData.status) as ProjectInput["statusType"] || "active",
+                teamMembersIDs: []
+                // userId: 1, // we'll set a default or get from session later
             };
 
             // Handle thumbnail: if it's a File, convert to base64
-            if (formData.thumbnail instanceof File) {
-                // For simplicity, we'll skip file upload and just use a placeholder.
-                // In production, you'd upload to a cloud service and get a URL.
-                // For now, we'll just use a placeholder.
-                payload.thumbnailUrl = "https://via.placeholder.com/400x225/2563eb/ffffff?text=MASTERY";
-            } else if (typeof formData.thumbnail === "string" && formData.thumbnail) {
-                payload.thumbnailUrl = formData.thumbnail;
-            } else {
-                payload.thumbnailUrl = "https://via.placeholder.com/400x225/2563eb/ffffff?text=MASTERY";
-            }
+            // if (formData.thumbnail instanceof File) {
+            //     // For simplicity, we'll skip file upload and just use a placeholder.
+            //     // In production, you'd upload to a cloud service and get a URL.
+            //     // For now, we'll just use a placeholder.
+            //     payload.thumbnailUrl = "https://via.placeholder.com/400x225/2563eb/ffffff?text=MASTERY";
+            // } else if (typeof formData.thumbnail === "string" && formData.thumbnail) {
+            //     payload.thumbnailUrl = formData.thumbnail;
+            // } else {
+            //     payload.thumbnailUrl = "https://via.placeholder.com/400x225/2563eb/ffffff?text=MASTERY";
+            // }
 
             // For team members, we'll add them as separate API calls or include in the project creation.
             // Since the API doesn't have a field for team members in the project creation,
@@ -198,28 +198,28 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
                 throw new Error(errorData.error || "حدث خطأ أثناء حفظ المشروع");
             }
 
-            const result = await response.json();
-            const createdProject = result.data;
+            await response.json();
+            // const createdProject = result.data;
 
             // If there are team members, add them
-            if (formData.team.length > 0 && createdProject.id) {
-                // Add each team member
-                for (const memberName of formData.team) {
-                    try {
-                        await fetch(`${API_BASE}/api/projects/${createdProject.id}/team`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                name: memberName,
-                                email: `${memberName.replace(/\s/g, "").toLowerCase()}@placeholder.com`,
-                                role: "عضو فريق",
-                            }),
-                        });
-                    } catch (err) {
-                        console.error("Failed to add team member:", err);
-                    }
-                }
-            }
+            // if (formData.teamMembers.length > 0 && createdProject.id) {
+            //     // Add each team member
+            //     for (const memberName of formData.teamMembers) {
+            //         try {
+            //             await fetch(`${API_BASE}/api/projects/${createdProject.id}/team`, {
+            //                 method: "POST",
+            //                 headers: { "Content-Type": "application/json" },
+            //                 body: JSON.stringify({
+            //                     name: memberName,
+            //                     email: `${memberName.replace(/\s/g, "").toLowerCase()}@placeholder.com`,
+            //                     role: "عضو فريق",
+            //                 }),
+            //             });
+            //         } catch (err) {
+            //             console.error("Failed to add team member:", err);
+            //         }
+            //     }
+            // }
 
             alert(mode === "create" ? "تم إضافة المشروع بنجاح" : "تم تحديث المشروع بنجاح");
             router.push("/admin/project-management");
@@ -249,7 +249,7 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
                         label="عنوان المشروع *"
                         name="title"
                         type="text"
-                        value={formData.title}
+                        value={formData.title || ""}
                         onChange={handleChange}
                         placeholder="أدخل عنوان المشروع"
                         error={errors.title}
@@ -258,7 +258,7 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
                         label="اسم العميل *"
                         name="client"
                         type="text"
-                        value={formData.client}
+                        value={formData.client || ""}
                         onChange={handleChange}
                         placeholder="أدخل اسم العميل"
                         error={errors.client}
@@ -267,7 +267,7 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
                         label="نوع المشروع"
                         name="projectType"
                         type="select"
-                        value={formData.projectType}
+                        value={formData.projectType || "COMMERCIAL"}
                         onChange={handleChange}
                         options={projectTypeOptions}
                     />
@@ -275,7 +275,7 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
                         label="الحالة"
                         name="status"
                         type="select"
-                        value={formData.status}
+                        value={formData.status || "START"}
                         onChange={handleChange}
                         options={statusOptions}
                         error={errors.status}
@@ -295,7 +295,7 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
                     label="الوصف *"
                     name="description"
                     type="textarea"
-                    value={formData.description}
+                    value={formData.description || ""}
                     onChange={handleChange}
                     placeholder="وصف تفصيلي للمشروع"
                     rows={4}
@@ -313,7 +313,7 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
                         label="تاريخ التسليم *"
                         name="deadline"
                         type="date"
-                        value={formData.deadline}
+                        value={formData.deadline?.toLocaleString() || ""}
                         onChange={handleChange}
                         error={errors.deadline}
                     />
@@ -328,18 +328,18 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
                     />
                 </div>
 
-                <TeamMembersInput
-                    value={formData.team}
+                {/* <TeamMembersInput
+                    value={formData.teamMembersIDs[]}
                     onChange={handleTeamChange}
                     label="فريق العمل"
                     placeholder="أضف اسم عضو ثم اضغط Enter"
-                />
+                /> */}
 
-                <ImageUpload
+                {/* <ImageUpload
                     value={formData.thumbnail}
                     onChange={handleThumbnailChange}
                     label="الصورة المصغرة"
-                />
+                /> */}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-end">

@@ -5,14 +5,17 @@ import { requireAuth } from "@/lib/auth-guard";
 import { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
+    console.log("api/stats/dashboard hits")
     try {
         const { role } = await requireAuth(request);
-
-        if (role != "admin") {
+        console.log("role: ", role)
+        
+        if (role != "ADMIN") {
             console.log("api/stats/dashboard/route.ts: require admin authorization for revealing this data")
             return errorResponse("these are admin only informations", 400);
         }
-        
+        console.log("check pass");
+
         // Get counts
         const [activeProjects, newRequests, totalViews] = await Promise.all([
             prisma.project.count({
@@ -34,6 +37,8 @@ export async function GET(request: NextRequest) {
             // Mock total views for now - we can later sum project views or store separately
             Promise.resolve(1200000), // 1.2M mock value
         ]);
+
+        console.log("asdc", activeProjects, newRequests, totalViews);
 
         // Get recent projects (limit 5)
         const recentProjects = await prisma.project.findMany({
@@ -65,6 +70,7 @@ export async function GET(request: NextRequest) {
 
         return successResponse(200, stats, "تم جلب إحصائيات لوحة التحكم");
     } catch (error) {
+        console.log("error fetching the stats: ", error);
         return handleApiError(error);
     }
 }

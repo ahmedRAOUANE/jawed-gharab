@@ -2,11 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { MdNotifications } from "react-icons/md";
 
 export const AdminHeader = () => {
+    const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
+
+    const getLinkClass = (href: string) =>
+        `font-label-md text-label-md transition-all duration-300 ${pathname === href
+            ? "text-primary font-bold"
+            : "text-on-surface-variant hover:text-primary"
+        }`;
 
     useEffect(() => {
         const handleScroll = () => {
@@ -29,19 +37,22 @@ export const AdminHeader = () => {
             </div>
             
             <nav className="hidden md:flex flex-row-reverse items-center gap-8">
-                <Link href="/admin/settings" className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all duration-300">
+                <Link href="/admin/settings" className={getLinkClass("/admin/settings")}>
                     الإعدادات
                 </Link>
 
-                <Link href="/admin/requests" className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all duration-300">
+                <Link href="/admin/requests" className={getLinkClass("/admin/requests")}>
                     الطلبات
                 </Link>
 
-                <Link href="/admin/project-management" className="font-label-md text-label-md text-primary font-bold transition-all duration-300">
+                <Link
+                    href="/admin/project-management"
+                    className={getLinkClass("/admin/project-management")}
+                >
                     إدارة المشاريع
                 </Link>
 
-                <Link href="/admin/" className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all duration-300">
+                <Link href="/admin" className={getLinkClass("/admin")}>
                     التقارير
                 </Link>
             </nav>

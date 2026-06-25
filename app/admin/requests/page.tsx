@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Lead, LeadCard } from "@/components/layout/admin.lead-card";
 import { FilterButtons } from "@/components/ui/admin.filter-btns";
 import { StatsCard } from "@/components/ui/admin.stats-card";
+import { LeadCardSkeleton } from "@/components/ui/lead-card-skeleton";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
@@ -19,7 +20,7 @@ const statusMap: Record<string, string> = {
 const statusReverseMap: Record<string, string> = {
     "الكل": "",
     "جديد": "NEW",
-    "قيد الانت장ار": "PENDING",
+    "قيد الانتظار": "PENDING",
     "تم التواصل": "CONTACTED",
 };
 
@@ -31,6 +32,7 @@ export default function LeadsPage() {
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [activeFilter, setActiveFilter] = useState("الكل");
 
     // Filter state
     const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "");
@@ -96,6 +98,7 @@ export default function LeadsPage() {
 
     // Update URL when filter changes
     const updateFilter = (filter: string) => {
+        setActiveFilter(filter);
         const apiStatus = statusReverseMap[filter] || "";
         setStatusFilter(apiStatus);
         setPage(1);
@@ -125,19 +128,22 @@ export default function LeadsPage() {
 
             {/* Filter Buttons */}
             <FilterButtons
-                activeFilter={statusReverseMap[statusFilter] || "الكل"}
+                activeFilter={activeFilter}
                 onFilterChange={updateFilter}
             />
 
             {/* Leads List */}
             {loading ? (
-                <div className="flex justify-center items-center h-64">
-                    <div className="text-primary text-xl">جاري التحميل...</div>
+                <div className="space-y-4">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <LeadCardSkeleton key={i} />
+                    ))}
                 </div>
             ) : error ? (
                 <div className="text-error text-center p-8 glass-card rounded-2xl">
                     <p>حدث خطأ: {error}</p>
                     <button
+                        type="button"
                         onClick={() => fetchLeads()}
                         className="mt-4 px-6 py-2 bg-primary-container text-on-primary-container rounded-lg"
                     >
@@ -149,34 +155,34 @@ export default function LeadsPage() {
                     <p className="text-on-surface-variant text-lg">لا توجد طلبات مطابقة</p>
                 </div>
             ) : (
-                <>
-                    <div className="space-y-4">
-                        {leads.map((lead) => (
-                            <LeadCard key={lead.id} lead={lead} />
-                        ))}
-                    </div>
-                    {total > limit && (
-                        <div className="flex justify-center gap-2 mt-8">
-                            <button
-                                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                disabled={page === 1}
-                                className="px-4 py-2 glass-card rounded-lg disabled:opacity-50"
-                            >
-                                السابق
-                            </button>
-                            <span className="px-4 py-2">
-                                صفحة {page} من {Math.ceil(total / limit)}
-                            </span>
-                            <button
-                                onClick={() => setPage((p) => p + 1)}
-                                disabled={page >= Math.ceil(total / limit)}
-                                className="px-4 py-2 glass-card rounded-lg disabled:opacity-50"
-                            >
-                                التالي
-                            </button>
-                        </div>
-                    )}
-                </>
+                <div className="space-y-4">
+                    {leads.map((lead) => (
+                        <LeadCard key={lead.id} lead={lead} />
+                    ))}
+                </div>
+            )}
+            {total > limit && (
+                <div className="flex justify-center gap-2 mt-8">
+                    <button
+                        type="button"
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="cursor-pointer px-4 py-2 glass-card rounded-lg disabled:opacity-50"
+                    >
+                        السابق
+                    </button>
+                    <span className="px-4 py-2">
+                        صفحة {page} من {Math.ceil(total / limit)}
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => setPage((p) => p + 1)}
+                        disabled={page >= Math.ceil(total / limit)}
+                        className="cursor-pointer px-4 py-2 glass-card rounded-lg disabled:opacity-50"
+                    >
+                        التالي
+                    </button>
+                </div>
             )}
         </main>
     );

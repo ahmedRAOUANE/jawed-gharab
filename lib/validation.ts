@@ -1,27 +1,56 @@
 import { z } from "zod";
 
+// TeamMember validation
+export const TeamMemberSchema = z.object({
+  id: z.number(),
+  name: z.string().min(1, "الاسم مطلوب"),
+  email: z.email("بريد إلكتروني غير صالح"),
+  role: z.string().min(1, "الدور مطلوب"),
+  avatar: z.string().url().optional(),
+  skills: z.array(z.string()).optional(),
+  projectId: z.number().int().positive("معرف المشروع مطلوب"),
+});
+
+export type TeamMemberInput = z.infer<typeof TeamMemberSchema>;
+
 // Project validation
 export const ProjectSchema = z.object({
+  id: z.number(),
   title: z.string().min(1, "العنوان مطلوب"),
   client: z.string().min(1, "اسم العميل مطلوب"),
   description: z.string().min(1, "الوصف مطلوب"),
   status: z.enum(["START", "EDITING", "REVIEW", "DELIVERED"]).default("START"),
+  statusType: z.enum(["active", "review", "start", "editing", "delivered"]).default("start"),
   projectType: z.enum(["COMMERCIAL", "DOCUMENTARY", "MOTION_GRAPHICS", "MUSIC_VIDEO", "OTHER"]).default("OTHER"),
   stage: z.string().optional(),
   progress: z.number().int().min(0).max(100).default(0),
   budget: z.number().positive("الميزانية يجب أن تكون رقمًا موجبًا"),
-  deadline: z.string().datetime({ offset: true }).or(z.date()), // ISO string or Date
-  thumbnailUrl: z.string().url().optional(),
+  deadline: z.iso.datetime({ offset: true }).or(z.date()), // ISO string or Date
+  thumbnailUrl: z.url().optional(),
   projectLink: z.string().url().optional(),
   userId: z.number().int().positive("معرف المستخدم مطلوب"),
+  teamMembers: TeamMemberSchema.array(),
+  teamMembersIDs: z.array(z.number())
 });
 
-export type ProjectInput = z.infer<typeof ProjectSchema>;
+export const projectInputSchema = ProjectSchema.omit({ id: true, userId: true, teamMembers: true});
+
+export type ProjectInput = z.infer<typeof projectInputSchema>;
 
 // Project update (partial)
-export const ProjectUpdateSchema = ProjectSchema.partial();
+export const ProjectUpdateSchema = ProjectSchema.omit({ id: true, userId: true, teamMembers: true }).partial();
 
 export type ProjectUpdateInput = z.infer<typeof ProjectUpdateSchema>;
+
+export const ProjectDisplaySchema = ProjectSchema.omit({
+  client: true,
+  budget: true,
+  deadline: true,
+  userId: true,
+  teamMembersIDs: true
+})
+
+export type Project = z.infer<typeof ProjectDisplaySchema>
 
 // Request (Lead) validation
 export const RequestSchema = z.object({
@@ -47,18 +76,6 @@ export type RequestUpdateInput = z.infer<typeof RequestUpdateSchema>;
 export const RequestStatusSchema = z.object({
   status: z.enum(["NEW", "PENDING", "CONTACTED"]),
 });
-
-// TeamMember validation
-export const TeamMemberSchema = z.object({
-  name: z.string().min(1, "الاسم مطلوب"),
-  email: z.email("بريد إلكتروني غير صالح"),
-  role: z.string().min(1, "الدور مطلوب"),
-  avatar: z.string().url().optional(),
-  skills: z.array(z.string()).optional(),
-  projectId: z.number().int().positive("معرف المشروع مطلوب"),
-});
-
-export type TeamMemberInput = z.infer<typeof TeamMemberSchema>;
 
 // User profile update
 export const UserUpdateSchema = z.object({

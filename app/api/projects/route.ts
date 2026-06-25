@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { successResponse } from "@/lib/api-response";
 import { handleApiError } from "@/lib/error-handler";
-import { CreateProjectSchema, PaginationSchema } from "@/lib/validation";
+import { CreateProjectSchema, PaginationSchema, ProjectDisplaySchema } from "@/lib/validation";
 import type { Prisma } from "@prisma/client";
 import { ProjectStatus, ProjectType } from "@prisma/client";
 import prisma from "@/lib/prisma";
@@ -48,18 +48,17 @@ export async function GET(request: NextRequest) {
                 take: limit,
                 orderBy: { createdAt: "desc" },
                 include: {
-                    user: {
-                        select: { id: true, name: true, email: true },
-                    },
                     teamMembers: true,
                 },
             }),
             prisma.project.count({ where }),
         ]);
 
+        const validatedProjects = ProjectDisplaySchema.array().safeParse(projects);
+
         return successResponse(
             200,
-            projects,
+            validatedProjects.data,
             "تم جلب المشاريع بنجاح",
             {
                 page,

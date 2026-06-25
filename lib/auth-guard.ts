@@ -1,4 +1,3 @@
-// lib/auth-guard.ts
 import { NextRequest } from "next/server";
 import { extractTokenFromRequest, verifyToken, JwtPayload } from "./jwt";
 
