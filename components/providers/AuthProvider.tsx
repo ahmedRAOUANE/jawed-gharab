@@ -45,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     const data = await res.json();
                     setUser(data.data);
                 } else {
+                    await fetch("/api/auth/logout", {method: "POST"});
                     setUser(null);
                 }
             } catch (error) {

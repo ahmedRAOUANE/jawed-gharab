@@ -1,13 +1,6 @@
 import { successResponse } from "@/lib/api-response";
 
 export async function POST() {
-    // const response = NextResponse.json(
-    //     {
-    //         success: true,
-    //         message: "تم تسجيل الخروج بنجاح",
-    //     },
-    //     { status: 200 }
-    // );
     const response = successResponse(200, null, "تم تسجيل الخروج بنجاح");
 
     // Clear the auth token cookie
