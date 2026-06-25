@@ -1,4 +1,3 @@
-// prisma/seed.ts
 import prisma from "@/lib/prisma";
 import { ProjectStatus, ProjectType, RequestStatus, UserRole } from "@prisma/client";
 import { hash } from "bcryptjs";
@@ -113,50 +112,6 @@ const requestStatuses = [
 
 const icons = ["person", "business", "movie"];
 
-const teamMemberNames = [
-    "محمد خالد",
-    "أحمد السديري",
-    "سارة الشمري",
-    "فهد العتيبي",
-    "نورة العنزي",
-    "عبدالله الحسني",
-    "ريم الحربي",
-    "خالد المالكي",
-    "منى السعيد",
-    "عمر الفهد",
-    "جواهر العلي",
-    "سلمان الدوسري",
-    "روان القحطاني",
-    "مشعل المطيري",
-    "هيا اليوسف",
-];
-
-const teamMemberRoles = [
-    "محرر فيديو",
-    "مصور سينمائي",
-    "مخرج فني",
-    "مصمم جرافيك",
-    "منتج تنفيذي",
-    "مهندس صوت",
-    "مؤثرات بصرية",
-    "محرر نصوص",
-    "مدير مشروع",
-    "مساعد مونتاج",
-];
-
-const teamMemberSkills = [
-    ["Adobe Premiere", "Final Cut Pro", "DaVinci Resolve"],
-    ["تصوير سينمائي", "إضاءة"],
-    ["إخراج", "توجيه فني"],
-    ["After Effects", "Illustrator"],
-    ["إنتاج", "تخطيط"],
-    ["تسجيل صوتي", "ميكساج"],
-    ["مؤثرات خاصة", "تلوين"],
-    ["كتابة نصوص", "تحرير"],
-    ["إدارة مشاريع", "تنسيق"],
-    ["مونتاج", "تلوين"],
-];
-
 // Helper functions
 const randomItem = <T>(items: T[]): T => items[Math.floor(Math.random() * items.length)];
 const randomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
@@ -181,7 +136,6 @@ async function main() {
     await prisma.loginAttempt.deleteMany();
     await prisma.passwordResetToken.deleteMany();
     await prisma.emailVerificationToken.deleteMany();
-    await prisma.teamMember.deleteMany();
     await prisma.project.deleteMany();
     await prisma.request.deleteMany();
     await prisma.user.deleteMany();
@@ -315,25 +269,6 @@ async function main() {
     }
     console.log(`✅ Created ${requests.length} requests`);
 
-    // ===== CREATE TEAM MEMBERS =====
-    const teamMembers = [];
-    for (let i = 0; i < 25; i++) {
-        const project = randomItem(projects);
-        const member = await prisma.teamMember.create({
-            data: {
-                name: teamMemberNames[i % teamMemberNames.length],
-                email: `team${i + 1}@jawedgharab.com`,
-                role: randomItem(teamMemberRoles),
-                avatar: "https://via.placeholder.com/50",
-                skills: randomItem(teamMemberSkills),
-                projectId: project.id,
-                createdAt: randomDate(),
-            },
-        });
-        teamMembers.push(member);
-    }
-    console.log(`✅ Created ${teamMembers.length} team members`);
-
     // ===== CREATE AUTH TOKENS (for testing) =====
 
     // 1. Valid email verification token for admin (will be deleted after verification)
@@ -413,7 +348,6 @@ async function main() {
     console.log(`  - Extra users: ${extraUsers.length}`);
     console.log(`- Projects: ${projects.length}`);
     console.log(`- Requests: ${requests.length}`);
-    console.log(`- Team Members: ${teamMembers.length}`);
     console.log(`- Auth Tokens: EmailVerification (2), PasswordReset (2)`);
     console.log(`- Login Attempts: 4`);
 
