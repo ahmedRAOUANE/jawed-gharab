@@ -1,55 +1,77 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+
 import { ProjectForm } from "@/components/layout/admin.add-project-form";
-import { TeamMember } from "@prisma/client";
+import { ProjectUpdateInput } from "@/lib/validation";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+export default function EditProjectPage() {
+    const params = useParams();
+    const projectId = params.id as string;
 
-async function getProject(id: string) {
-    const res = await fetch(`${API_BASE}/api/projects/${id}`, {
-        cache: "no-store",
-    });
-    if (!res.ok) {
-        throw new Error("Failed to fetch project");
+    const [initialData, setInitialData] = useState<ProjectUpdateInput | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        async function fetchProject() {
+            try {
+                const res = await fetch(`/api/projects/${projectId}`);
+
+                if (!res.ok) {
+                    throw new Error("Failed to fetch project");
+                }
+
+                const data = await res.json();
+                const project = data.data;
+
+                setInitialData({
+                    title: project.title,
+                    client: project.client,
+                    description: project.description,
+                    status: project.status,
+                    projectType: project.projectType,
+                    deadline: project.deadline
+                        ? new Date(project.deadline)
+                            .toISOString()
+                            .split("T")[0]
+                        : "",
+                    budget: project.budget,
+                    thumbnailUrl: project.thumbnailUrl || "",
+                    projectLink: project.projectLink || "",
+                });
+            } catch (err) {
+                setError(
+                    err instanceof Error
+                        ? err.message
+                        : "Failed to fetch project"
+                );
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        if (projectId) {
+            fetchProject();
+        }
+    }, [projectId]);
+
+    if (loading) {
+        return (
+            <main className="pt-32 pb-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+                Loading...
+            </main>
+        );
     }
-    const data = await res.json();
-    return data.data;
-}
 
-export default async function EditProjectPage({
-    params,
-}: {
-    params: Promise<{ id: string }>;
-}) {
-    const projectId = (await params).id;
-    const project = await getProject(projectId);
-
-    // Map API data to form data
-    const statusMap: Record<string, string> = {
-        START: "بدء العمل",
-        EDITING: "قيد المونتاج",
-        REVIEW: "في انتظار المراجعة",
-        DELIVERED: "تم التسليم",
-    };
-
-    const typeMap: Record<string, string> = {
-        COMMERCIAL: "إعلان",
-        DOCUMENTARY: "وثائقي",
-        MOTION_GRAPHICS: "موشن جرافيك",
-        MUSIC_VIDEO: "فيديو موسيقي",
-        OTHER: "أخرى",
-    };
-
-    const initialData = {
-        title: project.title,
-        client: project.client,
-        description: project.description,
-        status: statusMap[project.status] || "بدء العمل",
-        projectType: typeMap[project.projectType] || "أخرى",
-        team: project.teamMembers?.map((tm: TeamMember) => tm.name) || [],
-        deadline: project.deadline ? new Date(project.deadline).toISOString().split("T")[0] : "",
-        budget: project.budget,
-        thumbnail: project.thumbnailUrl || "",
-        projectLink: project.projectLink || "",
-    };
+    if (error || !initialData) {
+        return (
+            <main className="pt-32 pb-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+                <p>{error ?? "Project not found"}</p>
+            </main>
+        );
+    }
 
     return (
         <main className="pt-32 pb-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
@@ -57,11 +79,17 @@ export default async function EditProjectPage({
                 <h1 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-on-background mb-4">
                     تعديل المشروع
                 </h1>
+
                 <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
                     قم بتحديث تفاصيل المشروع الحالي.
                 </p>
             </div>
-            <ProjectForm mode="edit" initialData={initialData} projectId={projectId} />
+
+            <ProjectForm
+                mode="edit"
+                initialData={initialData}
+                projectId={projectId}
+            />
         </main>
     );
 }

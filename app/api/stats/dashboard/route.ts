@@ -5,16 +5,13 @@ import { requireAuth } from "@/lib/auth-guard";
 import { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
-    console.log("api/stats/dashboard hits")
     try {
         const { role } = await requireAuth(request);
-        console.log("role: ", role)
         
         if (role != "ADMIN") {
             console.log("api/stats/dashboard/route.ts: require admin authorization for revealing this data")
             return errorResponse("these are admin only informations", 400);
         }
-        console.log("check pass");
 
         // Get counts
         const [activeProjects, newRequests, totalViews] = await Promise.all([
@@ -38,8 +35,6 @@ export async function GET(request: NextRequest) {
             Promise.resolve(1200000), // 1.2M mock value
         ]);
 
-        console.log("asdc", activeProjects, newRequests, totalViews);
-
         // Get recent projects (limit 5)
         const recentProjects = await prisma.project.findMany({
             where: { deletedAt: null },
@@ -49,7 +44,6 @@ export async function GET(request: NextRequest) {
                 user: {
                     select: { id: true, name: true, email: true },
                 },
-                teamMembers: true,
             },
         });
 

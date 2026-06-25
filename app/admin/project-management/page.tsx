@@ -7,43 +7,11 @@ import { AddProjectButton } from "@/components/layout/admin.add-project-btn";
 import { ProjectCard } from "@/components/ui/admin.project-card";
 import { SearchFilterBar } from "@/components/ui/admin.seachfilterbar";
 import { StatsCard } from "@/components/ui/admin.stats-card";
-import { Project } from "@/lib/validation";
 import { ProjectCardSkeleton } from "@/components/ui/project-card-skeleton";
+import { AdminProjectOverview } from "@/lib/validation";
 
 // API base URL
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-
-// Helper to map API status to UI statusType
-const mapStatus = (status: string): Project["statusType"] => {
-    switch (status) {
-        case "START":
-            return "start";
-        case "EDITING":
-            return "editing";
-        case "REVIEW":
-            return "review";
-        case "DELIVERED":
-            return "delivered";
-        default:
-            return "start";
-    }
-};
-
-// Helper to map API status to Arabic text
-const mapStatusText = (status: string): string => {
-    switch (status) {
-        case "START":
-            return "بدء العمل";
-        case "EDITING":
-            return "قيد المونتاج";
-        case "REVIEW":
-            return "في انتظار المراجعة";
-        case "DELIVERED":
-            return "تم التسليم";
-        default:
-            return status;
-    }
-};
 
 export default function ProjectManagementPage() {
     const router = useRouter();
@@ -57,7 +25,7 @@ export default function ProjectManagementPage() {
     const [limit] = useState(9);
 
     // Data state
-    const [projects, setProjects] = useState<Project[]>([]);
+    const [projects, setProjects] = useState<AdminProjectOverview[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -85,24 +53,12 @@ export default function ProjectManagementPage() {
             }
             const data = await res.json();
 
-            // Map API projects to UI Project type
-            const mappedProjects: Project[] = data.data.map((p: Project) => ({
-                id: p.id,
-                title: p.title,
-                status: mapStatusText(p.status),
-                statusType: mapStatus(p.status),
-                stage: p.stage || "مرحلة غير محددة",
-                progress: p.progress,
-                thumbnailUrl: p.thumbnailUrl || "https://via.placeholder.com/400x225/2563eb/ffffff?text=MASTERY",
-                teamMembers: p.teamMembers,
-            }));
-
-            setProjects(mappedProjects);
+            setProjects(data.data);
             setTotal(data.pagination?.total || 0);
 
             // Calculate stats
-            const active = mappedProjects.filter(p => p.statusType === "editing" || p.statusType === "review").length;
-            const review = mappedProjects.filter(p => p.statusType === "review").length;
+            const active = data.data.filter((p: AdminProjectOverview) => p.status === "EDITING" || p.status === "REVIEW").length;
+            const review = data.data.filter((p: AdminProjectOverview) => p.status === "REVIEW").length;
             setActiveCount(active);
             setReviewCount(review);
         } catch (err) {

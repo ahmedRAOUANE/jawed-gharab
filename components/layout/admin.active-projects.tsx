@@ -1,12 +1,11 @@
-// components/layout/admin.active-projects.tsx
 import { BiArrowBack } from "react-icons/bi";
 import { ProjectCard } from "../ui/admin.project-card";
 import Link from "next/link";
-import { Project } from "@/lib/validation";
 import { ProjectCardSkeleton } from "../ui/project-card-skeleton";
+import { AdminProjectOverview } from "@/lib/validation";
 
 interface ActiveProjectsListProps {
-    projects: Project[];
+    projects: AdminProjectOverview[];
     loading: boolean;
 }
 

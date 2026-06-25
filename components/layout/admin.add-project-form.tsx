@@ -1,14 +1,10 @@
 "use client";
 
-import { SubmitEventHandler, useState } from "react";
+import { SubmitEventHandler, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MdSave, MdCancel } from "react-icons/md";
 import { FormField } from "../ui/form-field";
 import { ProjectCreateInput, ProjectUpdateInput } from "@/lib/validation";
-import { ProjectStatus, ProjectType } from "@prisma/client";
-
-// API base URL
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 interface ProjectFormProps {
     mode: "create" | "edit";
@@ -16,49 +12,47 @@ interface ProjectFormProps {
     projectId?: string; // for edit mode
 }
 
-// Map UI status to API enum
-const mapStatusToAPI = (status: ProjectStatus = "ACTIVE"): ProjectStatus => {
-    const map: Record<string, ProjectStatus> = {
-        "بدء العمل": "START",
-        "قيد المونتاج": "EDITING",
-        "في انتظار المراجعة": "REVIEW",
-        "تم التسليم": "DELIVERED",
-    };
-    return map[status] || "START";
-};
+const statusOptions = [
+    {
+        value: "START",
+        label: "بدء العمل",
+    },
+    {
+        value: "EDITING",
+        label: "قيد المونتاج",
+    },
+    {
+        value: "REVIEW",
+        label: "في انتظار المراجعة",
+    },
+    {
+        value: "DELIVERED",
+        label: "تم التسليم",
+    },
+];
 
-const mapTypeToAPI = (type: ProjectType = "COMMERCIAL"): ProjectType => {
-    const map: Record<string, ProjectType> = {
-        "إعلان": "COMMERCIAL",
-        "وثائقي": "DOCUMENTARY",
-        "موشن جرافيك": "MOTION_GRAPHICS",
-        "فيديو موسيقي": "MUSIC_VIDEO",
-        "أخرى": "OTHER",
-    };
-    return map[type] || "OTHER";
-};
-
-// Map API status to UI
-// const mapStatusToUI = (status: ProjectStatus): string => {
-//     const map: Record<ProjectStatus, string> = {
-//         "START": "بدء العمل",
-//         "EDITING": "قيد المونتاج",
-//         "REVIEW": "في انتظار المراجعة",
-//         "DELIVERED": "تم التسليم",
-//     };
-//     return map[status] || "بدء العمل";
-// };
-
-// const mapTypeToUI = (type: string): string => {
-//     const map: Record<string, string> = {
-//         "COMMERCIAL": "إعلان",
-//         "DOCUMENTARY": "وثائقي",
-//         "MOTION_GRAPHICS": "موشن جرافيك",
-//         "MUSIC_VIDEO": "فيديو موسيقي",
-//         "OTHER": "أخرى",
-//     };
-//     return map[type] || "أخرى";
-// };
+const projectTypeOptions = [
+    {
+        value: "COMMERCIAL",
+        label: "إعلان",
+    },
+    {
+        value: "DOCUMENTARY",
+        label: "وثائقي",
+    },
+    {
+        value: "MOTION_GRAPHICS",
+        label: "موشن جرافيك",
+    },
+    {
+        value: "MUSIC_VIDEO",
+        label: "فيديو موسيقي",
+    },
+    {
+        value: "OTHER",
+        label: "أخرى",
+    },
+];
 
 export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormProps) => {
     const router = useRouter();
@@ -77,21 +71,6 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [submitError, setSubmitError] = useState<string | null>(null);
 
-    const statusOptions = [
-        "بدء العمل",
-        "قيد المونتاج",
-        "في انتظار المراجعة",
-        "تم التسليم",
-    ];
-
-    const projectTypeOptions = [
-        "إعلان",
-        "وثائقي",
-        "موشن جرافيك",
-        "فيديو موسيقي",
-        "أخرى",
-    ];
-
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
@@ -102,14 +81,6 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
         }
         setSubmitError(null);
     };
-
-    // const handleTeamChange = (team: string[]) => {
-    //     setFormData((prev) => ({ ...prev, team }));
-    // };
-
-    // const handleThumbnailChange = (file: File | null) => {
-    //     setFormData((prev) => ({ ...prev, thumbnail: file || "" }));
-    // };
 
     const validate = () => {
         const newErrors: Record<string, string> = {};
@@ -136,8 +107,8 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
                 title: formData.title,
                 client: formData.client,
                 description: formData.description,
-                status: mapStatusToAPI(formData.status),
-                projectType: mapTypeToAPI(formData.projectType),
+                status: formData.status,
+                projectType: formData.projectType,
                 stage: "مرحلة غير محددة", // we can allow a stage field later
                 progress: 0, // default
                 budget: Number(formData.budget),
@@ -146,8 +117,8 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
             };
 
             const url = mode === "create"
-                ? `${API_BASE}/api/projects`
-                : `${API_BASE}/api/projects/${projectId}`;
+                ? `/api/projects`
+                : `/api/projects/${projectId}`;
 
             const method = mode === "create" ? "POST" : "PUT";
 
@@ -173,6 +144,24 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        const updateFormData = () => {
+            setFormData({
+                title: initialData.title || "",
+                client: initialData.client || "",
+                description: initialData.description || "",
+                status: initialData.status || "START",
+                projectType: initialData.projectType || "COMMERCIAL",
+                deadline: initialData.deadline || "",
+                budget: initialData.budget,
+                thumbnailUrl: initialData.thumbnailUrl || "",
+                projectLink: initialData.projectLink || "",
+            });
+        }
+
+        updateFormData();
+    }, [initialData]);
 
     return (
         <form onSubmit={handleSubmit} className="space-y-8">

@@ -10,7 +10,10 @@ interface FormFieldProps {
     ) => void;
     placeholder?: string;
     rows?: number;
-    options?: string[];
+    options?: {
+        value: string;
+        label: string;
+    }[];
     error?: string;
     required?: boolean;
 }
@@ -47,11 +50,14 @@ export const FormField = ({
             ) : type === "select" ? (
                 <select title={name} name={name} value={value} onChange={onChange} className={baseClass}>
                     <option value="">اختر...</option>
-                    {options.map((opt) => (
-                        <option key={opt} value={opt}>
-                            {opt}
-                        </option>
-                    ))}
+                        {options.map((opt) => (
+                            <option
+                                key={opt.value}
+                                value={opt.value}
+                            >
+                                {opt.label}
+                            </option>
+                        ))}
                 </select>
             ) : (
                 <input

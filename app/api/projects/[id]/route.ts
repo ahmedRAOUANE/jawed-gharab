@@ -24,7 +24,6 @@ export async function GET(
                 user: {
                     select: { id: true, name: true, email: true },
                 },
-                teamMembers: true,
             },
         });
 
@@ -32,7 +31,9 @@ export async function GET(
             return errorResponse("Project not found", 404);
         }
 
-        return successResponse(200, project, "تم جلب المشروع بنجاح");
+        const validatedProject = ProjectUpdateSchema.safeParse(project);
+
+        return successResponse(200, validatedProject, "تم جلب المشروع بنجاح");
     } catch (error) {
         return handleApiError(error);
     }

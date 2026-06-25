@@ -7,8 +7,8 @@ import { RecentLeadsList } from "@/components/layout/admin.reacent-leads";
 import ScrollReveal from "@/components/providers/ScrollReveal";
 import { StatsCard } from "@/components/ui/admin.stats-card";
 import { Lead } from "@/components/ui/admin.lead-card";
-import { Project } from "@/lib/validation";
 import { Request } from "@prisma/client";
+import { AdminProjectOverview } from "@/lib/validation";
 
 type DashboardStats = {
     activeProjects: number;
@@ -23,7 +23,7 @@ export default function AdminOverviewPage() {
         newRequests: 0,
     });
 
-    const [mappedProjects, setMappedProjects] = useState<Project[]>([]);
+    const [mappedProjects, setMappedProjects] = useState<AdminProjectOverview[]>([]);
     const [mappedLeads, setMappedLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -51,30 +51,6 @@ export default function AdminOverviewPage() {
                 const projectsData = projects?.data || [];
                 const leadsData = leads?.data || [];
 
-                const mappedProjects: Project[] = projectsData.map((p: Project) => ({
-                    id: p.id,
-                    title: p.title,
-                    stage: p.stage || "مرحلة غير محددة",
-                    status:
-                        p.status === "EDITING"
-                            ? "قيد التنفيذ"
-                            : p.status === "REVIEW"
-                                ? "مراجعة العميل"
-                                : p.status === "START"
-                                    ? "بدء العمل"
-                                    : "تم التسليم",
-                    statusType:
-                        p.status === "EDITING"
-                            ? "active"
-                            : p.status === "REVIEW"
-                                ? "review"
-                                : "start",
-                    progress: p.progress,
-                    thumbnailUrl:
-                        p.thumbnailUrl ||
-                        "https://via.placeholder.com/400x225/2563eb/ffffff?text=MASTERY",
-                }));
-
                 const mappedLeads: Lead[] = leadsData.map((l: Request) => ({
                     id: l.id,
                     initials: l.name.charAt(0),
@@ -88,7 +64,7 @@ export default function AdminOverviewPage() {
                 }));
 
                 setStatsData(statsData);
-                setMappedProjects(mappedProjects);
+                setMappedProjects(projectsData);
                 setMappedLeads(mappedLeads);
             } catch (error) {
                 console.error("Failed to fetch dashboard data:", error);
