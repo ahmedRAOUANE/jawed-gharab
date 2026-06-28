@@ -62,7 +62,7 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
         description: initialData.description || "",
         status: initialData.status || "START",
         projectType: initialData.projectType || "COMMERCIAL",
-        deadline: initialData.deadline || "",
+        deadline: initialData.deadline,
         budget: initialData.budget,
         thumbnailUrl: initialData.thumbnailUrl || "",
         projectLink: initialData.projectLink || "",
@@ -146,22 +146,24 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
     };
 
     useEffect(() => {
-        const updateFormData = () => {
+        if (mode !== "edit") return;
+
+        const loadData = () => {
             setFormData({
                 title: initialData.title || "",
                 client: initialData.client || "",
                 description: initialData.description || "",
                 status: initialData.status || "START",
                 projectType: initialData.projectType || "COMMERCIAL",
-                deadline: initialData.deadline || "",
+                deadline: initialData.deadline,
                 budget: initialData.budget,
                 thumbnailUrl: initialData.thumbnailUrl || "",
                 projectLink: initialData.projectLink || "",
             });
         }
 
-        updateFormData();
-    }, [initialData]);
+        loadData();
+    }, [mode, initialData]);
 
     return (
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -245,7 +247,7 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
                         label="تاريخ التسليم *"
                         name="deadline"
                         type="date"
-                        value={formData.deadline?.toLocaleString() || ""}
+                        value={formData.deadline ? formData.deadline?.toLocaleString().split("T")[0] : ""}
                         onChange={handleChange}
                         error={errors.deadline}
                     />
@@ -265,7 +267,7 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
                 <button
                     type="button"
                     onClick={() => router.back()}
-                    className="flex items-center justify-center gap-2 px-8 py-3 rounded-xl border border-white/10 text-on-surface-variant hover:bg-white/5 transition-colors"
+                    className="cursor-pointer flex items-center justify-center gap-2 px-8 py-3 rounded-xl border border-white/10 text-on-surface-variant hover:bg-white/5 transition-colors"
                 >
                     <MdCancel size={20} />
                     <span>إلغاء</span>
@@ -274,7 +276,7 @@ export const ProjectForm = ({ mode, initialData = {}, projectId }: ProjectFormPr
                 <button
                     type="submit"
                     disabled={loading}
-                    className="flex items-center justify-center gap-2 px-8 py-3 bg-primary-container text-on-primary-container rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-60 disabled:hover:scale-100"
+                    className="cursor-pointer flex items-center justify-center gap-2 px-8 py-3 bg-primary-container text-on-primary-container rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-60 disabled:hover:scale-100"
                 >
                     <MdSave size={20} />
                     <span>{loading ? "جاري الحفظ..." : mode === "create" ? "إضافة المشروع" : "تحديث المشروع"}</span>

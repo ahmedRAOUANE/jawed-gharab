@@ -12,8 +12,8 @@ export const ProjectSchema = z.object({
   stage: z.string().optional(),
   progress: z.number().int().min(0).max(100).default(0),
   budget: z.number().positive("الميزانية يجب أن تكون رقمًا موجبًا"),
-  deadline: z.iso.datetime({ offset: true }).or(z.date()), // ISO string or Date
-  thumbnailUrl: z.url().optional(),
+  deadline: z.coerce.date(), 
+  thumbnailUrl: z.url().optional().nullable(),
   projectLink: z.url().optional(),
   userId: z.number().int().positive("معرف المستخدم مطلوب"),
 });

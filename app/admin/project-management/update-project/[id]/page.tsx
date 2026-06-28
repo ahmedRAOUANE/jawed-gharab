@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 
 import { ProjectForm } from "@/components/layout/admin.add-project-form";
 import { ProjectUpdateInput } from "@/lib/validation";
+import ProjectFormSkeleton from "@/components/ui/project-form-skeleton";
 
 export default function EditProjectPage() {
     const params = useParams();
@@ -24,7 +25,7 @@ export default function EditProjectPage() {
                 }
 
                 const data = await res.json();
-                const project = data.data;
+                const project = data.data
 
                 setInitialData({
                     title: project.title,
@@ -32,11 +33,7 @@ export default function EditProjectPage() {
                     description: project.description,
                     status: project.status,
                     projectType: project.projectType,
-                    deadline: project.deadline
-                        ? new Date(project.deadline)
-                            .toISOString()
-                            .split("T")[0]
-                        : "",
+                    deadline: project.deadline,
                     budget: project.budget,
                     thumbnailUrl: project.thumbnailUrl || "",
                     projectLink: project.projectLink || "",
@@ -57,15 +54,7 @@ export default function EditProjectPage() {
         }
     }, [projectId]);
 
-    if (loading) {
-        return (
-            <main className="pt-32 pb-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
-                Loading...
-            </main>
-        );
-    }
-
-    if (error || !initialData) {
+    if (error || (!initialData && !loading)) {
         return (
             <main className="pt-32 pb-24 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
                 <p>{error ?? "Project not found"}</p>
@@ -85,11 +74,17 @@ export default function EditProjectPage() {
                 </p>
             </div>
 
-            <ProjectForm
-                mode="edit"
-                initialData={initialData}
-                projectId={projectId}
-            />
+            {loading ? (
+                <ProjectFormSkeleton/>
+            ) : initialData ? (
+                    <ProjectForm
+                        mode="edit"
+                        initialData={initialData}
+                        projectId={projectId}
+                    />
+            ) : (
+                <div>no project data found!</div>
+            )}
         </main>
     );
 }

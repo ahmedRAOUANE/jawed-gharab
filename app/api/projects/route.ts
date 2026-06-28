@@ -1,11 +1,13 @@
 import { NextRequest } from "next/server";
-import { successResponse } from "@/lib/api-response";
+import { errorResponse, successResponse } from "@/lib/api-response";
 import { handleApiError } from "@/lib/error-handler";
 import { AdminProjectDisplayOverviewSchema, PaginationSchema, projectCreateSchema } from "@/lib/validation";
 import type { Prisma } from "@prisma/client";
 import { ProjectStatus, ProjectType } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-guard";
+import { getYoutubeThumbnail } from "@/lib/thumbnail";
+import { zodShapeToPrismaSelect } from "@/lib/prisma-select-builder";
 
 export async function GET(request: NextRequest) {
     try {
@@ -51,11 +53,12 @@ export async function GET(request: NextRequest) {
             prisma.project.count({ where }),
         ]);
 
-        const validatedProjects = AdminProjectDisplayOverviewSchema.array().safeParse(projects);
+        console.log("projects: ", projects);
+        const validatedProjects = AdminProjectDisplayOverviewSchema.array().parse(projects);
 
         return successResponse(
             200,
-            validatedProjects.data,
+            validatedProjects,
             "تم جلب المشاريع بنجاح",
             {
                 page,
@@ -70,16 +73,18 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
+        const {role, userId} = await requireAuth(request);
+        if (role != "ADMIN") {
+            return errorResponse("only admin can create new projects", 400);
+        }
+        
         const body = await request.json();
 
-        // Validate with CreateProjectSchema (userId optional, but we'll set a default for now)
-        const validatedData = projectCreateSchema.parse(body);
+        const withThumbnail = { ...body, thumbnailUrl: body.thumbnailUrl ?? getYoutubeThumbnail(body.projectLink) }
 
-        // extract the user id
-        const {userId} = await requireAuth(request);
-
-        // Convert deadline to Date object
-        const deadline = new Date(validatedData.deadline);
+        console.log("with thumbnail: ", withThumbnail);
+        // Validate with CreateProjectSchema 
+        const validatedData = projectCreateSchema.parse(withThumbnail);
 
         const project = await prisma.project.create({
             data: {
@@ -91,20 +96,17 @@ export async function POST(request: NextRequest) {
                 stage: validatedData.stage,
                 progress: validatedData.progress,
                 budget: validatedData.budget,
-                deadline: deadline,
+                deadline: validatedData.deadline,
                 thumbnailUrl: validatedData.thumbnailUrl,
                 projectLink: validatedData.projectLink,
                 userId: userId,
             },
-            include: {
-                user: {
-                    select: { id: true, name: true, email: true },
-                },
-                teamMembers: true,
-            },
+            select: zodShapeToPrismaSelect(projectCreateSchema.shape)
         });
 
-        return successResponse(201, project, "تم إنشاء المشروع بنجاح");
+        const validatedProject = projectCreateSchema.parse(project);
+
+        return successResponse(201, validatedProject, "تم إنشاء المشروع بنجاح");
     } catch (error) {
         return handleApiError(error);
     }

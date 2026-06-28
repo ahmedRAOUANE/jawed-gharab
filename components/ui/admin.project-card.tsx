@@ -56,12 +56,12 @@ export const ProjectCard = ({ project, className, largeImg }: { project: AdminPr
                         {statusInfo.text}
                     </span>
                 </div>
-                <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                {/* <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
                     <div
                         className="bg-primary-container h-full progress-glow"
                         style={{ width: `${project.progress}%` }}
                     ></div>
-                </div>
+                </div> */}
             </div>
         </Link>
     );

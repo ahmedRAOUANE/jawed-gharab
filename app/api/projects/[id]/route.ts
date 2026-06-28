@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { handleApiError } from "@/lib/error-handler";
-import { ProjectUpdateSchema } from "@/lib/validation";
+import { AdminProjectDisplayDetailSchema, ProjectUpdateSchema } from "@/lib/validation";
 import { requireAuth } from "@/lib/auth-guard";
 
 export async function GET(
@@ -19,19 +19,14 @@ export async function GET(
             where: {
                 id,
                 deletedAt: null,
-            },
-            include: {
-                user: {
-                    select: { id: true, name: true, email: true },
-                },
-            },
+            }
         });
 
         if (!project) {
             return errorResponse("Project not found", 404);
         }
 
-        const validatedProject = ProjectUpdateSchema.safeParse(project);
+        const validatedProject = AdminProjectDisplayDetailSchema.parse(project);
 
         return successResponse(200, validatedProject, "تم جلب المشروع بنجاح");
     } catch (error) {
@@ -46,7 +41,7 @@ export async function PUT(
     try {
         const { role } = await requireAuth(request);
 
-        if (role != "admin") {
+        if (role != "ADMIN") {
             console.log("api/projects/id/route.ts: require admin authorization for updating a project")
             return errorResponse("require admin authorization for this operation", 400);
         }
@@ -82,7 +77,6 @@ export async function PUT(
                 user: {
                     select: { id: true, name: true, email: true },
                 },
-                teamMembers: true,
             },
         });
 
@@ -99,7 +93,7 @@ export async function DELETE(
     try {
         const { role } = await requireAuth(request);
 
-        if (role != "admin") {
+        if (role != "ADMIN") {
             console.log("api/projects/id/route.ts: require admin authorization for deleting a project")
             return errorResponse("require admin authorization for this operation", 400);
         }
