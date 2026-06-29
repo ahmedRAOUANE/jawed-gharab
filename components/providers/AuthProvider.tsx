@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 interface User {
@@ -33,31 +33,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
-
-    // Fetch current user on mount
-    useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                const res = await fetch("/api/users/me", {
-                    credentials: "include", // important for cookies
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    setUser(data.data);
-                } else {
-                    await fetch("/api/auth/logout", {method: "POST"});
-                    setUser(null);
-                }
-            } catch (error) {
-                console.error("Failed to fetch user:", error);
-                setUser(null);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchUser();
-    }, []);
 
     const login = async (email: string, password: string) => {
         const res = await fetch("/api/auth/login", {
@@ -92,11 +67,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         router.push("/verify-email?email=" + encodeURIComponent(data.email));
     };
 
-    const logout = async () => {
+    const logout = useCallback(async () => {
         await fetch("/api/auth/logout", { method: "POST" });
         setUser(null);
         router.push("/login");
-    };
+    }, [router]);
 
     const verifyEmail = async (token: string) => {
         const res = await fetch("/api/auth/verify-email", {
@@ -170,6 +145,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const updated = await res.json();
         setUser(updated.data);
     };
+
+    // Fetch current user on mount
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const res = await fetch("/api/users/me", {
+                    credentials: "include", // important for cookies
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setUser(data.data);
+                } else {
+                    await logout();
+                    setUser(null);
+                }
+            } catch (error) {
+                console.error("Failed to fetch user:", error);
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUser();
+    }, [logout]);
 
     const value: AuthContextType = {
         user,

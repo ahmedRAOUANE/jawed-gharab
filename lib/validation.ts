@@ -58,20 +58,31 @@ export type PublicProject = z.infer<typeof ProjectPublicDisplaySchema>
 export const RequestSchema = z.object({
   id: z.number(),
   name: z.string().min(1, "الاسم مطلوب"),
-  type: z.string().min(1, "نوع الطلب مطلوب"),
+  email: z.email(),
+  type: z.enum(ProjectType, {
+    error: (issue) =>
+      issue.input === undefined
+        ? "نوع الطلب مطلوب"
+        : "نوع الطلب غير صالح",
+  }),
   details: z.string().min(1, "التفاصيل مطلوبة"),
   budget: z.string().optional(),
-  location: z.string().optional(),
-  deadline: z.string().optional(),
+  location: z.string().optional().nullable(),
+  deadline: z.string().optional().nullable(),
   icon: z.enum(RequestIcon).default(RequestIcon.person),
   status: z.enum(RequestStatus).default(RequestStatus.NEW),
   replied: z.boolean().default(false),
-  repliedAt: z.date()
+  repliedAt: z.date(),
+  createdAt: z.date(),
 });
 
 export const RequestCreateSchema = RequestSchema.omit({
+  id: true,
   replied: true,
   repliedAt: true,
+  createdAt: true,
+  icon: true,
+  status: true,
 })
 
 export type RequestCreateInput = z.infer<typeof RequestCreateSchema>;

@@ -104,7 +104,8 @@ model Project {
 model Request {
   id          Int            @id @default(autoincrement())
   name        String
-  type        String
+  email       String
+  type        ProjectType
   details     String
   budget      String?
   location    String?
