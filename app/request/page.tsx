@@ -4,7 +4,7 @@ import ScrollReveal from '@/components/providers/ScrollReveal';
 import { FormField } from '@/components/ui/form-field';
 import { RequestCreateInput } from '@/lib/validation';
 import { ProjectType } from '@prisma/client';
-import { useState } from 'react';
+import { SubmitEventHandler, useState } from 'react';
 
 const projectTypeOptions = [
     {
@@ -29,16 +29,21 @@ const projectTypeOptions = [
     },
 ];
 
+const initialRequest: RequestCreateInput = {
+    name: "",
+    email: "",
+    type: "COMMERCIAL",
+    details: "",
+    budget: "",
+    location: "",
+    deadline: "",
+}
+
 const RequestPage = () => {
-    const [formData, setFormData] = useState<RequestCreateInput>({
-        name: "",
-        email: "",
-        type: "COMMERCIAL",
-        details: "",
-        budget: "",
-        location: "",
-        deadline: "",
-    });
+    const [formData, setFormData] = useState<RequestCreateInput>(initialRequest);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
+    const [acceptedTerms, setAcceptedTerms] = useState(false);
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -46,11 +51,33 @@ const RequestPage = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (e) => {
         e.preventDefault();
-        // Handle form submission logic here
-        console.log("Form submitted:", formData);
-        alert("تم استلام طلبك! سنتواصل معك قريباً.");
+
+        setError(null);
+
+        if (!acceptedTerms) {
+            setError("يجب الموافقة على الشروط والأحكام قبل إرسال الطلب.");
+            return;
+        }
+        
+        setLoading(true);
+        try {
+            const res = await fetch("/api/requests", {
+                method: "POST",
+                body: JSON.stringify(formData)
+            })
+            if (!res.ok) {
+                setError("لم نستطع ارسال طلبك حاليا, يرجى اعادة المحاولة لاحقا");
+            }
+
+            setFormData(initialRequest);
+            setAcceptedTerms(false);
+        } catch {
+            setError("حدث خطأ غير متوقع، يرجى إعادة المحاولة.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -63,6 +90,12 @@ const RequestPage = () => {
                     </h1>
                 </div>
             </div>
+
+            {error && (
+                <div>
+                    <p>{error}</p>
+                </div>
+            )}
 
             <ScrollReveal>
                 <form onSubmit={handleSubmit} className="glass-card p-8 rounded-24 space-y-6">
@@ -186,7 +219,14 @@ const RequestPage = () => {
                             <input
                                 type="checkbox"
                                 name="agree"
-                                required
+                                checked={acceptedTerms}
+                                onChange={(e) => {
+                                    setAcceptedTerms(e.target.checked);
+
+                                    if (e.target.checked) {
+                                        setError(null);
+                                    }
+                                }}
                                 className="mt-1 h-4 w-4 accent-primary cursor-pointer"
                             />
 
@@ -197,10 +237,11 @@ const RequestPage = () => {
                     </div>
 
                     <button
+                        disabled={loading}
                         type="submit"
                         className="cursor-pointer w-full bg-primary-container text-on-primary-container font-bold py-4 rounded-xl active:scale-95 hover:scale-[1.02] transition-all"
                     >
-                        إرسال الطلب
+                        {loading ? "جار ارسال الطلب" : "إرسال الطلب"}
                     </button>
                 </form>
             </ScrollReveal>
