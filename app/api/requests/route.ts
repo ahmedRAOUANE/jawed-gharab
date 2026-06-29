@@ -1,13 +1,19 @@
 import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
-import { successResponse } from "@/lib/api-response";
+import { errorResponse, successResponse } from "@/lib/api-response";
 import { handleApiError } from "@/lib/error-handler";
 import { PaginationSchema, RequestCreateSchema } from "@/lib/validation";
 import type { Prisma } from "@prisma/client";
-import { RequestStatus } from "@prisma/client";
+import { ProjectType } from "@prisma/client";
+import { requireAuth } from "@/lib/auth-guard";
 
 export async function GET(request: NextRequest) {
     try {
+        const {role} = await requireAuth(request);
+        if (role != "ADMIN") {
+            return errorResponse("unauthorized: only admin can request these data", 403);
+        }
+
         const searchParams = request.nextUrl.searchParams;
         const { page, limit, search, status, type } = PaginationSchema.parse({
             page: searchParams.get("page") ?? undefined,
@@ -24,20 +30,24 @@ export async function GET(request: NextRequest) {
             deletedAt: null, // exclude soft-deleted
         };
 
+        const projectType = Object.values(ProjectType).find(
+            (t) => t.toLowerCase() === search?.toLowerCase()
+        );
+
         if (search) {
             where.OR = [
                 { name: { contains: search, mode: "insensitive" } },
-                { type: { contains: search, mode: "insensitive" } },
                 { details: { contains: search, mode: "insensitive" } },
+                ...(projectType ? [{ type: projectType }] : []),
             ];
         }
 
         if (status) {
-            where.status = status as RequestStatus;
+            where.status = status;
         }
 
         if (type) {
-            where.type = { contains: type, mode: "insensitive" };
+            where.type = type;
         }
 
         const [requests, total] = await Promise.all([
@@ -73,13 +83,10 @@ export async function POST(request: NextRequest) {
         const validatedData = RequestCreateSchema.parse(body);
 
         const requestData = await prisma.request.create({
-            data: {
-                ...validatedData,
-                deadline: validatedData.deadline,
-                status: RequestStatus.NEW, // default
-                // icon is already in validatedData, default "person"
-            },
+            data: validatedData,
         });
+
+        // email the admin using node mailer
 
         return successResponse(201, requestData, "تم إنشاء الطلب بنجاح");
     } catch (error) {

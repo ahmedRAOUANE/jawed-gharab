@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import ScrollReveal from "../providers/ScrollReveal";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Hero() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -140,9 +141,9 @@ export default function Hero() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            <button className="cursor-pointer bg-primary-container text-on-primary-container font-label-md text-label-md px-8 py-4 rounded-xl active:scale-95 hover:scale-105 transition-all shadow-lg shadow-primary-container/20">
+            <Link href={"/request"} className="cursor-pointer bg-primary-container text-on-primary-container font-label-md text-label-md px-8 py-4 rounded-xl active:scale-95 hover:scale-105 transition-all shadow-lg shadow-primary-container/20">
               اطلب مشروعك الآن
-            </button>
+            </Link>
 
             <button className="cursor-pointer glass-card text-on-background font-label-md text-label-md px-8 py-4 rounded-xl border border-white/10 hover:bg-white/5 hover:scale-105 active:scale-95 transition-all">
               عرض الأعمال

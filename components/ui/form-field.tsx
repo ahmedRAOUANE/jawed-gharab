@@ -16,6 +16,7 @@ interface FormFieldProps {
     }[];
     error?: string;
     required?: boolean;
+    className?: string;
 }
 
 export const FormField = ({
@@ -29,12 +30,13 @@ export const FormField = ({
     options = [],
     error,
     required = false,
+    className
 }: FormFieldProps) => {
     const baseClass = `w-full bg-surface-container border ${error ? "border-error/50" : "border-white/10"
         } rounded-xl px-4 py-3 text-on-background focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all placeholder:text-on-surface-variant/50`;
 
     return (
-        <div className="space-y-2">
+        <div className={`space-y-2 ${className}`}>
             <label className="block font-label-md text-label-md text-on-surface-variant">
                 {label} {required && <span className="text-error">*</span>}
             </label>
