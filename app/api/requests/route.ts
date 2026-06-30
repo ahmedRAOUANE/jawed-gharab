@@ -6,6 +6,8 @@ import { PaginationSchema, RequestCreateSchema } from "@/lib/validation";
 import type { Prisma } from "@prisma/client";
 import { ProjectType } from "@prisma/client";
 import { requireAuth } from "@/lib/auth-guard";
+import { sendRequestConfirmationEmail, sendRequestEmail } from "@/lib/email-service";
+import { zodShapeToPrismaSelect } from "@/lib/prisma-select-builder";
 
 export async function GET(request: NextRequest) {
     try {
@@ -84,9 +86,24 @@ export async function POST(request: NextRequest) {
 
         const requestData = await prisma.request.create({
             data: validatedData,
+            select: zodShapeToPrismaSelect(RequestCreateSchema.shape)
         });
 
         // email the admin using node mailer
+        const admin = await prisma.user.findFirstOrThrow({
+            where: {
+                role: "ADMIN"
+            },
+            select: {
+                email: true,
+            }
+        })
+        //! for the current version, the user email is from the admin's profile directly
+        //! the plane is not to expose the admin's profile in a public route like this one
+        //! but get it from a public table 'config' contains the app's configuration data including the adimn's email
+
+        await sendRequestEmail(admin.email, validatedData);
+        await sendRequestConfirmationEmail({name: validatedData.name, email: validatedData.email})
 
         return successResponse(201, requestData, "تم إنشاء الطلب بنجاح");
     } catch (error) {
