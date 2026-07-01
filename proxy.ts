@@ -4,6 +4,7 @@ import { verifyToken } from "@/lib/jwt";
 // Public routes (no authentication required)
 const publicRoutes = [
     "/",
+    "/request",
     "/login",
     "/signup",
     "/forgot-password",
