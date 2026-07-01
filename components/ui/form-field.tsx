@@ -17,6 +17,7 @@ interface FormFieldProps {
     error?: string;
     required?: boolean;
     className?: string;
+    disabled?: boolean;
 }
 
 export const FormField = ({
@@ -30,9 +31,10 @@ export const FormField = ({
     options = [],
     error,
     required = false,
-    className
+    className,
+    disabled
 }: FormFieldProps) => {
-    const baseClass = `w-full bg-surface-container border ${error ? "border-error/50" : "border-white/10"
+    const baseClass = `w-full ${disabled ? "bg-surface" : "bg-surface-container"} border border-on-backgound ${error ? "border-error/50" : "border-on-error/10"
         } rounded-xl px-4 py-3 text-on-background focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all placeholder:text-on-surface-variant/50`;
 
     return (
@@ -43,6 +45,7 @@ export const FormField = ({
             {type === "textarea" ? (
                 <textarea
                     name={name}
+                    disabled={disabled}
                     value={value}
                     onChange={onChange}
                     placeholder={placeholder}
@@ -50,7 +53,8 @@ export const FormField = ({
                     className={baseClass}
                 />
             ) : type === "select" ? (
-                <select title={name} name={name} value={value} onChange={onChange} className={baseClass}>
+                <select title={name} name={name}
+                disabled={disabled} value={value} onChange={onChange} className={baseClass}>
                     <option value="">اختر...</option>
                         {options.map((opt) => (
                             <option
@@ -65,6 +69,7 @@ export const FormField = ({
                 <input
                     type={type}
                     name={name}
+                    disabled={disabled}
                     value={value}
                     onChange={onChange}
                     placeholder={placeholder}

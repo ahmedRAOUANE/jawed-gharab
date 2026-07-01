@@ -5,7 +5,6 @@ import { successResponse, errorResponse } from "@/lib/api-response";
 import { handleApiError } from "@/lib/error-handler";
 import { SignupSchema } from "@/lib/validation";
 import { generateVerificationToken } from "@/lib/token-generator";
-import { sendVerificationEmail } from "@/lib/email-service";
 
 export async function POST(request: NextRequest) {
     try {
@@ -21,7 +20,7 @@ export async function POST(request: NextRequest) {
         const hashedPassword = await hash(validatedData.password, 10);
 
         // Generate email verification token
-        const { plainToken, hashedToken, expiresAt } = generateVerificationToken();
+        const { hashedToken, expiresAt } = generateVerificationToken();
 
         // Create user
         const user = await prisma.user.create({
@@ -33,7 +32,7 @@ export async function POST(request: NextRequest) {
                 emailVerificationExpires: expiresAt,
                 emailVerified: false,
                 role: "ADMIN", 
-                accountStatus: "active",
+                accountStatus: 'INACTIVE',
                 profileProgress: 0,
             },
             select: {
@@ -48,18 +47,6 @@ export async function POST(request: NextRequest) {
                 createdAt: true,
             },
         });
-
-        // Send verification email
-        try {
-            await sendVerificationEmail(
-                { name: user.name, email: user.email },
-                plainToken
-            );
-        } catch (emailError) {
-            console.error("Failed to send verification email:", emailError);
-            // We still return success but notify the user to resend later
-            // Could add a flag or message
-        }
 
         return successResponse(201, user, "تم إنشاء الحساب بنجاح. يرجى تأكيد بريدك الإلكتروني.");
     } catch (error) {

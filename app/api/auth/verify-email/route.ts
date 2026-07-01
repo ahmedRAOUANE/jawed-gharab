@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
                 emailVerified: true,
                 emailVerificationToken: null,
                 emailVerificationExpires: null,
+                accountStatus: "ACTIVE",
             },
             select: {
                 id: true,

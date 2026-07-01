@@ -37,7 +37,7 @@ export default function SignUpPage() {
         setLoading(true);
         try {
             await signup(formData);
-            // signup redirects to verify-email page
+            // signup redirects to setup page
         } catch (err) {
             setError(err instanceof Error ? err.message : "فشل إنشاء الحساب");
         } finally {

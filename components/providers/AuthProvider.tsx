@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // After signup, redirect to verify email page
-        router.push("/verify-email?email=" + encodeURIComponent(data.email));
+        router.push("/setup?email=" + encodeURIComponent(data.email));
     };
 
     const logout = useCallback(async () => {

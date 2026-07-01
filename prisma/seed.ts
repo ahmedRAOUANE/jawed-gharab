@@ -139,7 +139,7 @@ async function main() {
             role: UserRole.ADMIN,
             avatarUrl:
                 "https://lh3.googleusercontent.com/aida-public/AB6AXuB8amvLXePbS1IZORTo1vCf4QByU1UWsK58dHIk4g74Nq74i7cjkDHBViX86MXV7OWQveqkfh1eVU-VXWfuR4SH5ToVNTuG0qtEPZFgwYY7Wi9h2L7a34ZpxhOoF4z1RcumFetArepUdaFbwYLU-pBORnt-kRUbmCUV59jT4d8tKeAlO9keOZICoySEd2KoMn31nKMsYdojAKPUEkuvgax9qFOReIbpdKpnk0QSKguvq6Bedm3FifHoPQ571CBeXk4CcQlINfNJxUo",
-            accountStatus: "نشط",
+            accountStatus: "ACTIVE",
             profileProgress: 80,
             emailVerified: true,
             lastLogin: new Date(),
