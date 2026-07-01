@@ -11,25 +11,25 @@ datasource db {
 // -------------------- Enums --------------------
 
 enum ProjectStatus {
-  START      // بدء العمل
-  EDITING    // قيد المونتاج
-  REVIEW     // في انتظار المراجعة
-  DELIVERED  // تم التسليم
-  ACTIVE     // نشط 
+  START // بدء العمل
+  EDITING // قيد المونتاج
+  REVIEW // في انتظار المراجعة
+  DELIVERED // تم التسليم
+  ACTIVE // نشط 
 }
 
 enum ProjectType {
-  COMMERCIAL      // إعلان
-  DOCUMENTARY     // وثائقي
+  COMMERCIAL // إعلان
+  DOCUMENTARY // وثائقي
   MOTION_GRAPHICS // موشن جرافيك
-  MUSIC_VIDEO     // فيديو موسيقي
-  OTHER           // أخرى
+  MUSIC_VIDEO // فيديو موسيقي
+  OTHER // أخرى
 }
 
 enum RequestStatus {
-  NEW        // جديد
-  PENDING    // قيد الانتظار
-  CONTACTED  // تم التواصل
+  NEW // جديد
+  PENDING // قيد الانتظار
+  CONTACTED // تم التواصل
 }
 
 enum RequestIcon {
@@ -45,78 +45,83 @@ enum UserRole {
   VIEWER
 }
 
+enum AccountStatus {
+  ACTIVE
+  INACTIVE
+}
+
 // -------------------- Models --------------------
 
 model User {
-  id              Int       @id @default(autoincrement())
-  email           String    @unique
-  password        String    // hashed
+  id              Int           @id @default(autoincrement())
+  email           String        @unique
+  password        String        // hashed
   name            String
-  role            UserRole  @default(EDITOR)
-  avatarUrl       String?   @map("avatar_url")
-  accountStatus   String    @default("نشط") @map("account_status")
-  profileProgress Int       @default(0) @map("profile_progress")
-  lastLogin       DateTime? @map("last_login")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  role            UserRole      @default(VIEWER)
+  avatarUrl       String?       @map("avatar_url")
+  accountStatus   AccountStatus @default(ACTIVE)
+  profileProgress Int           @default(0) @map("profile_progress")
+  lastLogin       DateTime?     @map("last_login")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
 
   // --- Authentication Fields ---
-  emailVerified             Boolean   @default(false) @map("email_verified")
-  emailVerificationToken    String?   @unique @map("email_verification_token")
-  emailVerificationExpires  DateTime? @map("email_verification_expires")
-  passwordResetToken        String?   @unique @map("password_reset_token")
-  passwordResetExpires      DateTime? @map("password_reset_expires")
-  loginAttempts             Int       @default(0) @map("login_attempts")
-  lockUntil                 DateTime? @map("lock_until")
+  emailVerified            Boolean   @default(false) @map("email_verified")
+  emailVerificationToken   String?   @unique @map("email_verification_token")
+  emailVerificationExpires DateTime? @map("email_verification_expires")
+  passwordResetToken       String?   @unique @map("password_reset_token")
+  passwordResetExpires     DateTime? @map("password_reset_expires")
+  loginAttempts            Int       @default(0) @map("login_attempts")
+  lockUntil                DateTime? @map("lock_until")
 
   // Relations
-  projects                  Project[]
-  emailVerificationTokens   EmailVerificationToken[]
-  passwordResetTokens       PasswordResetToken[]
-  loginAttemptsLog          LoginAttempt[]
+  projects                Project[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+  loginAttemptsLog        LoginAttempt[]
 
   @@map("users")
 }
 
 model Project {
-  id            Int          @id @default(autoincrement())
-  title         String
-  client        String
-  description   String
-  status        ProjectStatus @default(START)
-  projectType   ProjectType   @default(OTHER) @map("project_type")
-  stage         String?
-  progress      Int          @default(0)
-  budget        Float
-  deadline      DateTime
-  thumbnailUrl  String?      @map("thumbnail_url")
-  projectLink   String?      @map("project_link")
-  userId        Int          @map("user_id")
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
-  deletedAt     DateTime?    @map("deleted_at") // soft delete
+  id           Int           @id @default(autoincrement())
+  title        String
+  client       String
+  description  String
+  status       ProjectStatus @default(START)
+  projectType  ProjectType   @default(OTHER) @map("project_type")
+  stage        String?
+  progress     Int           @default(0)
+  budget       Float
+  deadline     DateTime
+  thumbnailUrl String?       @map("thumbnail_url")
+  projectLink  String?       @map("project_link")
+  userId       Int           @map("user_id")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  deletedAt    DateTime?     @map("deleted_at") // soft delete
 
-  user          User         @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@map("projects")
 }
 
 model Request {
-  id          Int            @id @default(autoincrement())
-  name        String
-  email       String
-  type        ProjectType
-  details     String
-  budget      String?
-  location    String?
-  deadline    String?
-  status      RequestStatus  @default(NEW)
-  icon        RequestIcon    @default(person)
-  replied     Boolean        @default(false)
-  repliedAt   DateTime?      @map("replied_at")
-  createdAt   DateTime       @default(now()) @map("created_at")
-  updatedAt   DateTime       @updatedAt @map("updated_at")
-  deletedAt   DateTime?      @map("deleted_at")
+  id        Int           @id @default(autoincrement())
+  name      String
+  email     String
+  type      ProjectType
+  details   String
+  budget    String?
+  location  String?
+  deadline  String?
+  status    RequestStatus @default(NEW)
+  icon      RequestIcon   @default(person)
+  replied   Boolean       @default(false)
+  repliedAt DateTime?     @map("replied_at")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  deletedAt DateTime?     @map("deleted_at")
 
   @@map("requests")
 }
@@ -130,7 +135,7 @@ model EmailVerificationToken {
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("email_verification_tokens")
 }
@@ -143,7 +148,7 @@ model PasswordResetToken {
   createdAt DateTime @default(now()) @map("created_at")
   used      Boolean  @default(false) // prevents reuse
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("password_reset_tokens")
 }
@@ -156,7 +161,7 @@ model LoginAttempt {
   userAgent String?  @map("user_agent")
   createdAt DateTime @default(now()) @map("created_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("login_attempts")
 }

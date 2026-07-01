@@ -12,12 +12,9 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const validatedData = SignupSchema.parse(body);
 
-        // Check if user already exists
-        const existingUser = await prisma.user.findUnique({
-            where: { email: validatedData.email },
-        });
-        if (existingUser) {
-            return errorResponse("البريد الإلكتروني مسجل بالفعل", 409);
+        const userCount = await prisma.user.count();
+        if (userCount > 0) {
+            return errorResponse("تم إنشاء الحساب الأول بالفعل", 403);
         }
 
         // Hash password
@@ -35,8 +32,8 @@ export async function POST(request: NextRequest) {
                 emailVerificationToken: hashedToken,
                 emailVerificationExpires: expiresAt,
                 emailVerified: false,
-                role: "EDITOR", // Default role
-                accountStatus: "نشط",
+                role: "ADMIN", 
+                accountStatus: "active",
                 profileProgress: 0,
             },
             select: {
