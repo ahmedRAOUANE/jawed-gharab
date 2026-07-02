@@ -30,6 +30,8 @@ export default function SetupPage() {
 
         fromName: "",
         fromEmail: searchParams.get("email") || "",
+
+        userId: searchParams.get("id"),
     });
     const [error, setError] = useState<string | null>(null);
 

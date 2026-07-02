@@ -63,8 +63,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             throw new Error(error.error || "فشل إنشاء الحساب");
         }
 
+        const {email, id} = await res.json();
+
         // After signup, redirect to verify email page
-        router.push("/setup?email=" + encodeURIComponent(data.email));
+        router.push("/setup?email=" + encodeURIComponent(email) + "&id=" + id);
     };
 
     const logout = useCallback(async () => {

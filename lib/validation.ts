@@ -8,11 +8,11 @@ export const ProjectSchema = z.object({
   client: z.string().min(1, "اسم العميل مطلوب"),
   description: z.string().min(1, "الوصف مطلوب"),
   status: z.enum(ProjectStatus).default(ProjectStatus.START),
-  projectType: z.enum(ProjectType).default(ProjectType.OTHER), 
+  projectType: z.enum(ProjectType).default(ProjectType.OTHER),
   stage: z.string().optional(),
   progress: z.number().int().min(0).max(100).default(0),
   budget: z.number().positive("الميزانية يجب أن تكون رقمًا موجبًا"),
-  deadline: z.coerce.date(), 
+  deadline: z.coerce.date(),
   thumbnailUrl: z.url().optional().nullable(),
   projectLink: z.url().optional(),
   userId: z.number().int().positive("معرف المستخدم مطلوب"),
@@ -22,7 +22,7 @@ export const projectCreateSchema = ProjectSchema.omit({ id: true, userId: true }
 
 export type ProjectCreateInput = z.infer<typeof projectCreateSchema>;
 
-export const ProjectUpdateSchema = ProjectSchema.omit({ userId: true  }).partial();
+export const ProjectUpdateSchema = ProjectSchema.omit({ userId: true }).partial();
 
 export type ProjectUpdateInput = z.infer<typeof ProjectUpdateSchema>;
 
@@ -185,3 +185,56 @@ export const ChangePasswordSchema = z
   });
 
 export type ChangePasswordInput = z.infer<typeof ChangePasswordSchema>;
+
+export const SetupSchema = z.object({
+  uid: z.number(),
+
+  // Config
+  name: z
+    .string()
+    .trim()
+    .min(2, "الاسم يجب أن يحتوي على حرفين على الأقل")
+    .max(100, "الاسم طويل جداً"),
+
+  email: z.email("البريد الإلكتروني غير صالح"),
+
+  siteName: z
+    .string()
+    .trim()
+    .min(2, "اسم الموقع مطلوب")
+    .max(100, "اسم الموقع طويل جداً"),
+
+  siteDescription: z
+    .string()
+    .trim()
+    .min(5, "يرجى كتابة وصف للموقع")
+    .max(500, "الوصف طويل جداً"),
+
+  // EmailSettings
+  smtpUser: z.email("بريد Gmail غير صالح"),
+
+  smtpPasswordEncrypted: z
+    .string()
+    .trim()
+    .min(16, "Google App Password غير صالح")
+    .max(64, "Google App Password غير صالح"),
+});
+
+export type SetupInput = z.infer<typeof SetupSchema>;
+
+export const ConfigSchema = SetupSchema.pick({
+  uid: true,
+  name: true,
+  email: true,
+  siteName: true,
+  siteDescription: true
+});
+
+export type ConfigInput = z.infer<typeof ConfigSchema>;
+
+export const EmailSettingsSchema = SetupSchema.pick({
+  smtpPasswordEncrypted: true,
+  smtpUser: true,
+});
+
+export type EmailSettingsInput = z.infer<typeof EmailSettingsSchema>;

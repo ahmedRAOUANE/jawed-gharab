@@ -20,8 +20,24 @@ export async function POST(request: NextRequest) {
             return successResponse(200, null, "إذا كان البريد مسجلاً، سيتم إرسال رابط التحقق");
         }
 
+        // check the email verification
         if (user.emailVerified) {
             return errorResponse("البريد الإلكتروني مؤكد بالفعل", 400);
+        }
+
+        // check config existence
+        const config = await prisma.config.findUnique({
+            where: {
+                uid: user.id,
+            },
+        });
+
+        if (!config) {
+            return errorResponse(
+                "Setup configuration not found",
+                404,
+                "لم يتم العثور على بيانات إعداد التطبيق"
+            );
         }
 
         // Generate new token
