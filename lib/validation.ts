@@ -1,4 +1,4 @@
-import { ProjectStatus, ProjectType, RequestIcon, RequestStatus, UserRole } from "@prisma/client";
+import { AccountStatus, ProjectStatus, ProjectType, RequestIcon, RequestStatus, UserRole } from "@prisma/client";
 import { z } from "zod";
 
 // Project validation
@@ -101,7 +101,7 @@ export const UserUpdateSchema = z.object({
   email: z.email().optional(),
   avatarUrl: z.url().optional(),
   role: z.enum(UserRole).optional(),
-  accountStatus: z.string().optional(),
+  accountStatus: z.enum(AccountStatus).optional(),
   profileProgress: z.number().int().min(0).max(100).optional(),
 });
 
@@ -168,7 +168,7 @@ export const VerifyEmailSchema = z.object({
 export type VerifyEmailInput = z.infer<typeof VerifyEmailSchema>;
 
 export const ResendVerificationSchema = z.object({
-  email: z.string().email("البريد الإلكتروني غير صالح"),
+  email: z.email("البريد الإلكتروني غير صالح"),
 });
 
 export type ResendVerificationInput = z.infer<typeof ResendVerificationSchema>;

@@ -1,54 +1,78 @@
-// lib/email-service.ts
 import nodemailer from "nodemailer";
 import { RequestCreateInput } from "./validation";
+import prisma from "./prisma";
+import { decrypt } from "./cripto";
+import SMTPTransport from "nodemailer/lib/smtp-transport";
 
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
-const APP_NAME = process.env.APP_NAME || "Jawed Gharab";
-const EMAIL_FROM = process.env.EMAIL_FROM || "noreply@jawedgharab.com";
 
-// Use mock email in development if no credentials are set
-const isDevelopment = process.env.NODE_ENV === "development";
-const useMockEmail =  false; // !process.env.EMAIL_HOST || isDevelopment;
+export type MailConfig = {
+  transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo, SMTPTransport.Options>;
+  email: string;
+  name: string;
+  appName: string;
+}
 
-// Create transporter only if not using mock
-const transporter = !useMockEmail
-  ? nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT || "587"),
-    secure: process.env.EMAIL_SECURE === "true",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-  })
-  : null;
+export async function getConfig(userId: number): Promise<MailConfig | null> {
+  try {
+    const config = await prisma.config.findUnique({
+      where: { uid: userId },
+      select: {
+        email: true,
+        name: true,
+        siteName: true,
+        emailSettings: {
+          select: {
+            smtpUser: true,
+            smtpPasswordEncrypted: true,
+          },
+        },
+      },
+    });
+
+    if (!config || !config.emailSettings) {
+      return null;
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: config.emailSettings.smtpUser,
+        pass: decrypt(config.emailSettings.smtpPasswordEncrypted),
+      },
+    });
+
+    return {
+      transporter,
+      email: config.email,
+      appName: config.siteName,
+      name: config.name,
+    };
+  } catch (error) {
+    console.error("lib/email-service > getConfig:", error);
+    return null;
+  }
+}
 
 /**
  * Send an email
  * In development, logs to console instead of sending
  */
-async function sendEmail(options: {
-  to: string;
-  subject: string;
-  html: string;
-  replyTo?: string | {name: string, address: string};
-}): Promise<void> {
-  if (useMockEmail) {
-    console.log("\n📧 [MOCK EMAIL] ================================");
-    console.log(`To: ${options.to}`);
-    console.log(`Subject: ${options.subject}`);
-    console.log("Body:");
-    console.log(options.html);
-    console.log("============================================\n");
-    return;
-  }
-
-  if (!transporter) {
-    throw new Error("Email transporter not configured");
-  }
+async function sendEmail(
+  options: {
+    to: string;
+    subject: string;
+    html: string;
+    replyTo?: string | { name: string; address: string };
+  },
+  config: MailConfig
+): Promise<void> {
+  const { transporter, email } = config;
 
   await transporter.sendMail({
-    from: EMAIL_FROM,
+    from: email,
     to: options.to,
     subject: options.subject,
     html: options.html,
@@ -60,10 +84,10 @@ async function sendEmail(options: {
  * Send email verification link
  */
 export async function sendVerificationEmail(
-  user: { name: string; email: string },
-  token: string
+  config: MailConfig,
+  token: string,
 ): Promise<void> {
-  const verificationUrl = `${APP_URL}/verify-email?token=${token}`;
+  const verificationUrl = `${APP_URL}/verify-email?token=${token}&email=${config.email}`;
 
   const html = `
     <!DOCTYPE html>
@@ -71,20 +95,20 @@ export async function sendVerificationEmail(
     <head>
       <meta charset="UTF-8">
       <style>
-        body { font-family: Arial, sans-serif; background: #081425; color: #d8e3fb; padding: 20px; }
+        body { font-family: Arial, sans-serif; background: #081425; color: #eff3fc; padding: 20px; }
         .container { max-width: 600px; margin: 0 auto; background: #152031; border-radius: 16px; padding: 40px; }
-        .header { text-align: center; font-size: 24px; font-weight: bold; color: #b4c5ff; }
+        .header { text-align: center; font-size: 24px; font-weight: bold; color: #eff3fc; }
         .content { margin-top: 24px; line-height: 1.8; }
-        .button { display: inline-block; background: #2563eb; color: #eeefff; padding: 12px 32px; border-radius: 8px; text-decoration: none; margin-top: 16px; }
-        .footer { margin-top: 32px; font-size: 14px; color: #c3c6d7; text-align: center; }
+        .button { display: inline-block; background: #2563eb; color: #eff3fc; padding: 12px 32px; border-radius: 8px; text-decoration: none; margin-top: 16px; }
+        .footer { margin-top: 32px; font-size: 14px; color: #eff3fc; text-align: center; }
       </style>
     </head>
     <body>
       <div class="container">
-        <div class="header">${APP_NAME}</div>
+        <div class="header">${config.appName}</div>
         <div class="content">
-          <h2>مرحباً ${user.name}،</h2>
-          <p>شكراً لتسجيلك في ${APP_NAME}. يرجى تأكيد بريدك الإلكتروني بالضغط على الرابط أدناه:</p>
+          <h2>مرحباً ${config.name}،</h2>
+          <p>شكراً لتسجيلك في ${config.appName}. يرجى تأكيد بريدك الإلكتروني بالضغط على الرابط أدناه:</p>
           <p style="text-align: center;">
             <a href="${verificationUrl}" class="button">تأكيد البريد الإلكتروني</a>
           </p>
@@ -92,7 +116,7 @@ export async function sendVerificationEmail(
           <p>هذا الرابط صالح لمدة 24 ساعة.</p>
         </div>
         <div class="footer">
-          ${APP_NAME} - جميع الحقوق محفوظة
+          ${config.appName} - جميع الحقوق محفوظة
         </div>
       </div>
     </body>
@@ -100,18 +124,18 @@ export async function sendVerificationEmail(
   `;
 
   await sendEmail({
-    to: user.email,
-    subject: `تأكيد البريد الإلكتروني - ${APP_NAME}`,
+    to: config.email,
+    subject: `تأكيد البريد الإلكتروني - ${config.appName}`,
     html,
-  });
+  }, config);
 }
 
 /**
  * Send password reset link
  */
 export async function sendPasswordResetEmail(
-  user: { name: string; email: string },
-  token: string
+  config: MailConfig,
+  token: string, 
 ): Promise<void> {
   const resetUrl = `${APP_URL}/reset-password?token=${token}`;
 
@@ -131,9 +155,9 @@ export async function sendPasswordResetEmail(
     </head>
     <body>
       <div class="container">
-        <div class="header">${APP_NAME}</div>
+        <div class="header">${config.appName}</div>
         <div class="content">
-          <h2>مرحباً ${user.name}،</h2>
+          <h2>مرحباً ${config.name}،</h2>
           <p>لقد تلقينا طلباً لإعادة تعيين كلمة المرور الخاصة بحسابك. انقر على الرابط أدناه لإنشاء كلمة مرور جديدة:</p>
           <p style="text-align: center;">
             <a href="${resetUrl}" class="button">إعادة تعيين كلمة المرور</a>
@@ -142,7 +166,7 @@ export async function sendPasswordResetEmail(
           <p>هذا الرابط صالح لمدة ساعة واحدة.</p>
         </div>
         <div class="footer">
-          ${APP_NAME} - جميع الحقوق محفوظة
+          ${config.appName} - جميع الحقوق محفوظة
         </div>
       </div>
     </body>
@@ -150,16 +174,16 @@ export async function sendPasswordResetEmail(
   `;
 
   await sendEmail({
-    to: user.email,
-    subject: `إعادة تعيين كلمة المرور - ${APP_NAME}`,
+    to: config.email,
+    subject: `إعادة تعيين كلمة المرور - ${config.appName}`,
     html,
-  });
+  }, config);
 }
 
 /**
  * Send welcome email after successful verification
  */
-export async function sendWelcomeEmail(user: { name: string; email: string }): Promise<void> {
+export async function sendWelcomeEmail(config: MailConfig): Promise<void> {
   const html = `
     <!DOCTYPE html>
     <html dir="rtl" lang="ar">
@@ -175,15 +199,15 @@ export async function sendWelcomeEmail(user: { name: string; email: string }): P
     </head>
     <body>
       <div class="container">
-        <div class="header">${APP_NAME}</div>
+        <div class="header">${config.appName}</div>
         <div class="content">
-          <h2>مرحباً ${user.name}،</h2>
+          <h2>مرحباً ${config.name}،</h2>
           <p>تم تأكيد بريدك الإلكتروني بنجاح! 🎉</p>
           <p>يمكنك الآن تسجيل الدخول إلى لوحة التحكم والبدء في إدارة مشاريعك.</p>
           <p>نتمنى لك تجربة ممتعة!</p>
         </div>
         <div class="footer">
-          ${APP_NAME} - جميع الحقوق محفوظة
+          ${config.appName} - جميع الحقوق محفوظة
         </div>
       </div>
     </body>
@@ -191,17 +215,17 @@ export async function sendWelcomeEmail(user: { name: string; email: string }): P
   `;
 
   await sendEmail({
-    to: user.email,
-    subject: `أهلاً بك في ${APP_NAME}`,
+    to: config.email,
+    subject: `أهلاً بك في ${config.appName}`,
     html,
-  });
+  }, config);
 }
 
 /**
  * Send request email
  */
 
-export async function sendRequestEmail(adminEmail: string, content: RequestCreateInput) {
+export async function sendRequestEmail(content: RequestCreateInput, config: MailConfig) {
   const projectTypeMap = {
     COMMERCIAL: "إعلان تجاري",
     DOCUMENTARY: "فيلم وثائقي",
@@ -287,7 +311,7 @@ body{
 
 <p>
 تم إرسال طلب مشروع جديد عبر موقع
-<strong>${APP_NAME}</strong>.
+<strong>${config.appName}</strong>.
 </p>
 
 <div class="card">
@@ -353,7 +377,7 @@ ${content.details}
 <div class="footer">
 
 تم إرسال هذه الرسالة تلقائيًا من موقع
-${APP_NAME}.
+${config.appName}.
 
 </div>
 
@@ -365,18 +389,19 @@ ${APP_NAME}.
 `;
 
   await sendEmail({
-    to: adminEmail,
+    to: config.email,
     subject: "طلب مشروع جديد",
     html,
-    replyTo: {name: content.name, address: content.email},
-  })
+    replyTo: { name: content.name, address: content.email },
+  }, config);
 }
 
 /**
  * Send confirmation email after a project request is submitted
  */
 export async function sendRequestConfirmationEmail(
-  user: { name: string; email: string }
+  user: { name: string; email: string },
+  config: MailConfig
 ): Promise<void> {
   const html = `
     <!DOCTYPE html>
@@ -424,7 +449,7 @@ export async function sendRequestConfirmationEmail(
       <div class="container">
 
         <div class="header">
-          ${APP_NAME}
+          ${config.appName}
         </div>
 
         <div class="content">
@@ -448,7 +473,7 @@ export async function sendRequestConfirmationEmail(
         </div>
 
         <div class="footer">
-          ${APP_NAME} - جميع الحقوق محفوظة
+          ${config.appName} - جميع الحقوق محفوظة
         </div>
 
       </div>
@@ -458,7 +483,7 @@ export async function sendRequestConfirmationEmail(
 
   await sendEmail({
     to: user.email,
-    subject: `تم استلام طلبك | ${APP_NAME}`,
+    subject: `تم استلام طلبك | ${config.appName}`,
     html,
-  });
+  }, config);
 }

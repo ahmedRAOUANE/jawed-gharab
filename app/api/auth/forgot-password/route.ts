@@ -4,7 +4,7 @@ import { successResponse, errorResponse } from "@/lib/api-response";
 import { handleApiError } from "@/lib/error-handler";
 import { ForgotPasswordSchema } from "@/lib/validation";
 import { generatePasswordResetToken } from "@/lib/token-generator";
-import { sendPasswordResetEmail } from "@/lib/email-service";
+import { getConfig, sendPasswordResetEmail } from "@/lib/email-service";
 
 export async function POST(request: NextRequest) {
     try {
@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
 
         const user = await prisma.user.findUnique({
             where: { email },
+            select: {id: true, emailVerified: true}
         });
 
         if (!user) {
@@ -37,10 +38,16 @@ export async function POST(request: NextRequest) {
             },
         });
 
+        const config = await getConfig(user.id);
+
+        if (!config) {
+            return errorResponse("config is empty", 404);
+        }
+
         // Send email
         try {
             await sendPasswordResetEmail(
-                { name: user.name, email: user.email },
+                config,
                 plainToken
             );
         } catch (emailError) {

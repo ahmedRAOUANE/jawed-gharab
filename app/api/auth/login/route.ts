@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
 
         // Check if email is verified
         if (!user.emailVerified) {
-            return errorResponse("يرجى تأكيد بريدك الإلكتروني أولاً", 403);
+            return errorResponse("يرجى تأكيد بريدك الإلكتروني أولاً", 403, "يرجى تأكيد بريدك الإلكتروني أولاً");
         }
 
         // Reset login attempts and update lastLogin

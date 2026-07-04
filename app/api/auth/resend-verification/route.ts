@@ -4,7 +4,9 @@ import { successResponse, errorResponse } from "@/lib/api-response";
 import { handleApiError } from "@/lib/error-handler";
 import { ResendVerificationSchema } from "@/lib/validation";
 import { generateVerificationToken } from "@/lib/token-generator";
-import { sendVerificationEmail } from "@/lib/email-service";
+import { MailConfig, sendVerificationEmail } from "@/lib/email-service";
+import nodemailer from "nodemailer"
+import { decrypt } from "@/lib/cripto";
 
 export async function POST(request: NextRequest) {
     try {
@@ -26,18 +28,25 @@ export async function POST(request: NextRequest) {
         }
 
         // check config existence
-        const config = await prisma.config.findUnique({
+        const configData = await prisma.config.findUnique({
             where: {
                 uid: user.id,
             },
+            select: {
+                name: true,
+                email: true,
+                siteName: true,
+                emailSettings: {
+                    select: {
+                        smtpUser: true,
+                        smtpPasswordEncrypted: true,
+                    }
+                }
+            }
         });
 
-        if (!config) {
-            return errorResponse(
-                "Setup configuration not found",
-                404,
-                "لم يتم العثور على بيانات إعداد التطبيق"
-            );
+        if (!configData || !configData.emailSettings) {
+            return errorResponse("config data are empty", 500)
         }
 
         // Generate new token
@@ -51,10 +60,27 @@ export async function POST(request: NextRequest) {
             },
         });
 
+        const transporter = nodemailer.createTransport({
+            host: "smtp.gmail.com",
+            port: 465,
+            secure: true,
+            auth: {
+                user: configData.emailSettings.smtpUser,
+                pass: decrypt(configData.emailSettings.smtpPasswordEncrypted),
+            },
+        })
+
+        const config: MailConfig = {
+            name: configData.name,
+            email: configData.email,
+            appName: configData.siteName,
+            transporter
+        }
+
         // Send email
         try {
             await sendVerificationEmail(
-                { name: user.name, email: user.email },
+                config,
                 plainToken
             );
         } catch (emailError) {

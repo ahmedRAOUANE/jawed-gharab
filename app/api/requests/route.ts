@@ -6,7 +6,7 @@ import { PaginationSchema, RequestCreateSchema } from "@/lib/validation";
 import type { Prisma } from "@prisma/client";
 import { ProjectType } from "@prisma/client";
 import { requireAuth } from "@/lib/auth-guard";
-import { sendRequestConfirmationEmail, sendRequestEmail } from "@/lib/email-service";
+import { getConfig, sendRequestConfirmationEmail, sendRequestEmail } from "@/lib/email-service";
 import { zodShapeToPrismaSelect } from "@/lib/prisma-select-builder";
 
 export async function GET(request: NextRequest) {
@@ -95,15 +95,30 @@ export async function POST(request: NextRequest) {
                 role: "ADMIN"
             },
             select: {
-                email: true,
+                id: true,
             }
         })
-        //! for the current version, the user email is from the admin's profile directly
-        //! the plane is not to expose the admin's profile in a public route like this one
-        //! but get it from a public table 'config' contains the app's configuration data including the adimn's email
 
-        await sendRequestEmail(admin.email, validatedData);
-        await sendRequestConfirmationEmail({name: validatedData.name, email: validatedData.email})
+        const config = await getConfig(admin.id);
+        if (!config) {
+            return errorResponse("can not find the configuration table", 404, "يبدو ان المستقبل لا يمكن العثور عليه في الحين")
+        }
+
+        // send to the admin the user's request
+        try {
+            await sendRequestEmail(validatedData, config);
+        } catch (error) {
+            console.log("/api/requests/POST > Error sending email to admin", error);
+            return errorResponse("unable to send the request to admin", 500, "يبدو انه لا يمكن الوصول الى الادمن حاليا")
+        }
+        
+        // send to the user that the admin recieved you email
+        try {
+            await sendRequestConfirmationEmail({name: validatedData.name, email: validatedData.email}, config)
+        } catch (error) {
+            console.log("/api/requests/POST > Error sending email to user", error);
+            return errorResponse("unable to send the request to user", 500, "يبدو انه لا يمكن الوصول الى المستخدم حاليا")
+        }
 
         return successResponse(201, requestData, "تم إنشاء الطلب بنجاح");
     } catch (error) {

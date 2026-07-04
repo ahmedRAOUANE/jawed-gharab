@@ -1,16 +1,18 @@
 import { errorResponse, successResponse } from "@/lib/api-response";
-import { encrypt } from "@/lib/cripto";
-import { sendVerificationEmail } from "@/lib/email-service";
+import { decrypt, encrypt } from "@/lib/cripto";
+import { MailConfig, sendVerificationEmail } from "@/lib/email-service";
 import prisma from "@/lib/prisma";
 import { ConfigInput, EmailSettingsInput, SetupSchema } from "@/lib/validation";
 import { NextRequest } from "next/server";
+import nodemailer from "nodemailer"
 
 export const POST = async (request: NextRequest) => {
     try {
         const body = await request.json();
 
-        const {success, data, error} = SetupSchema.safeParse({...body, uid: parseInt(body.id)});
+        const { success, data, error } = SetupSchema.safeParse({ ...body, uid: parseInt(body.userId), smtpPasswordEncrypted: body.smtpPassword});
         if (!success) {
+            console.log("/api/auth/setup/Prost > Error: ", error);
             return errorResponse(error.message, 400, "البيانات غير صحيحة");
         }
 
@@ -65,17 +67,50 @@ export const POST = async (request: NextRequest) => {
             smtpPasswordEncrypted: encrypt(data.smtpPasswordEncrypted)
         }
 
-        const config = await prisma.config.create({
+        const configData = await prisma.config.create({
             data: {
                 ...appConfig,
                 emailSettings: {
                     create: emailSettings
                 }
+            },
+            select: {
+                name: true,
+                email: true,
+                siteName: true,
+
+                emailSettings: {
+                    select: {
+                        smtpPasswordEncrypted: true,
+                        smtpUser: true
+                    }
+                }
             }
+        });
+
+        if (!configData || !configData.emailSettings) {
+            return errorResponse("config data are empty", 500)
+        }
+
+        const transporter = nodemailer.createTransport({
+            host: "smtp.gmail.com",
+            port: 465,
+            secure: true,
+            auth: {
+                user: configData.emailSettings.smtpUser,
+                pass: decrypt(configData.emailSettings.smtpPasswordEncrypted),
+            },
         })
 
+        const config: MailConfig = {
+            name: configData.name,
+            email: configData.email,
+            appName: configData.siteName,
+            transporter
+        }
+
         try {
-            await sendVerificationEmail({ name: data.name, email: data.email }, tokenData.emailVerificationToken);
+            await sendVerificationEmail(config, tokenData.emailVerificationToken);
         } catch (error) {
             console.error(error);
 
@@ -86,7 +121,7 @@ export const POST = async (request: NextRequest) => {
             );
         }
 
-        return successResponse(200, config, "تم تحضير التطبيق بنجاح");
+        return successResponse(200, configData, "تم تحضير التطبيق بنجاح");
     } catch (error) {
         console.log("/api/setup > error creating the new data: ", error);
         return errorResponse("غير قادر على تفعيل التطبيق حاليا", 500);

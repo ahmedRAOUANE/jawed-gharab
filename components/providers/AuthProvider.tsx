@@ -63,10 +63,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             throw new Error(error.error || "فشل إنشاء الحساب");
         }
 
-        const {email, id} = await res.json();
+        const user = await res.json();
 
         // After signup, redirect to verify email page
-        router.push("/setup?email=" + encodeURIComponent(email) + "&id=" + id);
+        router.push("/setup?email=" + encodeURIComponent(user.data.email) + "&id=" + user.data.id + "&name=" + user.data.name);
     };
 
     const logout = useCallback(async () => {
@@ -84,11 +84,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (!res.ok) {
             const error = await res.json();
+            console.log("components/providers/authProvider error: ", error);
             throw new Error(error.error || "فشل تأكيد البريد");
         }
 
         // After verification, we can redirect to login
-        router.push("/login?verified=true");
+        // router.push("/login?verified=true");
     };
 
     const resendVerification = async (email: string) => {

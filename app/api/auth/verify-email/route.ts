@@ -3,8 +3,10 @@ import prisma from "@/lib/prisma";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { handleApiError } from "@/lib/error-handler";
 import { VerifyEmailSchema } from "@/lib/validation";
-import { hashToken, isTokenExpired } from "@/lib/token-generator";
-import { sendWelcomeEmail } from "@/lib/email-service";
+import { isTokenExpired } from "@/lib/token-generator";
+import { MailConfig, sendWelcomeEmail } from "@/lib/email-service";
+import { decrypt } from "@/lib/cripto";
+import nodemailer from "nodemailer";
 
 export async function POST(request: NextRequest) {
     try {
@@ -12,14 +14,15 @@ export async function POST(request: NextRequest) {
         const { token } = VerifyEmailSchema.parse(body);
 
         // Find user with this verification token
-        const hashedToken = hashToken(token);
         const user = await prisma.user.findUnique({
             where: {
-                emailVerificationToken: hashedToken,
+                emailVerificationToken: token,
             },
         });
 
         if (!user || !user.emailVerificationToken || !user.emailVerificationExpires) {
+            console.log("/api/auth/verify-email/POST > failed to verify token \n")
+            console.log("user: ", user, "\n") // the user is null
             return errorResponse("رمز التحقق غير صالح", 400);
         }
 
@@ -51,7 +54,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Update user
-        const [updatedUser] = await prisma.$transaction([
+        const [updatedUser, configData] = await prisma.$transaction([
             prisma.user.update({
                 where: { id: user.id },
                 data: {
@@ -78,13 +81,47 @@ export async function POST(request: NextRequest) {
                 },
                 data: {
                     isSetup: true,
+                },
+                select: {
+                    name: true,
+                    siteName: true,
+                    email: true,
+                    uid: true,
+
+                    emailSettings: {
+                        select: {
+                            smtpUser: true,
+                            smtpPasswordEncrypted: true,
+                        }
+                    }
                 }
             })
         ]);
 
+        if (!configData || !configData.emailSettings?.smtpPasswordEncrypted) {
+            return errorResponse("config is empty", 404);
+        }
+
+        const transporter = nodemailer.createTransport({
+            host: "smtp.gmail.com",
+            port: 465,
+            secure: true,
+            auth: {
+                user: configData.emailSettings.smtpUser,
+                pass: decrypt(configData.emailSettings.smtpPasswordEncrypted),
+            },
+        });
+
+        const config: MailConfig = {
+            transporter,
+            email: configData.email,
+            name: configData.name,
+            appName: configData.siteName
+        }
+
         // Send welcome email
         try {
-            await sendWelcomeEmail({ name: updatedUser.name, email: updatedUser.email });
+            await sendWelcomeEmail(config);
         } catch (emailError) {
             console.error("Failed to send welcome email:", emailError);
         }

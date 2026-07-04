@@ -125,7 +125,7 @@ export default function SignUpPage() {
                         <button
                             type="submit"
                             disabled={loading || authLoading}
-                            className="w-full py-4 bg-primary-container text-on-primary-container font-bold rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-60 disabled:hover:scale-100"
+                            className="cursor-pointer w-full py-4 bg-primary-container text-on-primary-container font-bold rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-60 disabled:hover:scale-100"
                         >
                             {loading || authLoading ? "جاري إنشاء الحساب..." : "إنشاء الحساب"}
                         </button>

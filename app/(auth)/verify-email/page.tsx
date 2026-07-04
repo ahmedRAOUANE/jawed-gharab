@@ -25,6 +25,7 @@ export default function VerifyEmailPage() {
                     await verifyEmail(token);
                     setSuccess(true);
                 } catch (err) {
+                    console.log("error: ", err);
                     setError(err instanceof Error ? err.message : "فشل تأكيد البريد");
                 } finally {
                     setLoading(false);
@@ -64,7 +65,7 @@ export default function VerifyEmailPage() {
                         </p>
                         <Link
                             href="/login"
-                            className="inline-block px-6 py-3 bg-primary-container text-on-primary-container rounded-xl hover:scale-105 transition-all"
+                            className="inline-block cursor-pointer px-6 py-3 bg-primary-container text-on-primary-container rounded-xl hover:scale-105 transition-all"
                         >
                             الذهاب إلى تسجيل الدخول
                         </Link>
@@ -83,19 +84,24 @@ export default function VerifyEmailPage() {
                         <h2 className="font-headline-lg text-headline-lg text-on-background mb-2">
                             فشل تأكيد البريد
                         </h2>
+
                         <p className="text-error font-body-md mb-6">{error}</p>
+                        
                         {email && (
                             <button
+                                type="button"
                                 onClick={handleResend}
                                 disabled={loading}
-                                className="px-6 py-3 bg-primary-container text-on-primary-container rounded-xl hover:scale-105 transition-all disabled:opacity-60"
+                                className="cursor-pointer px-6 py-3 bg-primary-container text-on-primary-container rounded-xl hover:scale-105 transition-all disabled:opacity-60"
                             >
                                 {loading ? "جاري الإرسال..." : "إعادة إرسال رابط التأكيد"}
                             </button>
                         )}
+
                         {resendSuccess && (
                             <p className="text-green-400 mt-4">تم إرسال رابط جديد إلى بريدك الإلكتروني</p>
                         )}
+
                         <div className="mt-4">
                             <Link href="/login" className="text-primary hover:underline">
                                 العودة إلى تسجيل الدخول
@@ -133,9 +139,10 @@ export default function VerifyEmailPage() {
                     </p>
                     {email && (
                         <button
+                            type="button"
                             onClick={handleResend}
                             disabled={loading}
-                            className="px-6 py-3 bg-primary-container text-on-primary-container rounded-xl hover:scale-105 transition-all disabled:opacity-60"
+                            className="cursor-pointer px-6 py-3 bg-primary-container text-on-primary-container rounded-xl hover:scale-105 transition-all disabled:opacity-60"
                         >
                             {loading ? "جاري الإرسال..." : "إعادة إرسال رابط التأكيد"}
                         </button>

@@ -11,7 +11,7 @@ export default function SetupPage() {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         // Step 1
-        name: "",
+        name: searchParams.get("name") ||  "",
         email: searchParams.get("email") || "",
 
         // Step 2
@@ -101,12 +101,22 @@ export default function SetupPage() {
 
         setLoading(true);
         try {
-            // Mock setup
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-            console.log("Setup completed", formData);
-            // In the future: POST /api/setup with all data
-            // alert("تم إعداد المنصة بنجاح!");
-            // router.push("/login");
+            const res = await fetch("/api/auth/setup", {
+                method: "POST",
+                body: JSON.stringify(formData),
+            })
+
+            if (!res.ok) {
+                alert("filed to setup the profile");
+                return;
+            }
+
+            const data = await res.json();
+            if (!data.success) {
+                return alert(data.message);
+            }
+
+            router.push("/login");
         } catch (err) {
             setError("حدث خطأ أثناء الإعداد");
             console.log("profile setup error: ", err);

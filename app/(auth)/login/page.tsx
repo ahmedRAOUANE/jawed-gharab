@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { SubmitEventHandler, useState } from "react";
 import Link from "next/link";
 import { FormField } from "@/components/ui/form-field";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -38,7 +38,7 @@ export default function LoginPage() {
         return true;
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (e) => {
         e.preventDefault();
         if (!validate()) return;
         setLoading(true);
@@ -47,7 +47,7 @@ export default function LoginPage() {
             await login(formData.email, formData.password);
         } catch (err) {
             console.log("error logging in: ", err);
-            setError("فشل تسجيل الدخول. تحقق من بياناتك.");
+            setError(`${err}` || "فشل تسجيل الدخول. تحقق من بياناتك.");
         } finally {
             setLoading(false);
         }
@@ -96,7 +96,7 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-4 bg-primary-container text-on-primary-container font-bold rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-60 disabled:hover:scale-100"
+                            className="cursor-pointer w-full py-4 bg-primary-container text-on-primary-container font-bold rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-60 disabled:hover:scale-100"
                         >
                             {loading || authLoading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
                         </button>
