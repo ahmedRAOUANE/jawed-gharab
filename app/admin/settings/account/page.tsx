@@ -6,7 +6,6 @@ import Image from "next/image";
 import { MdSave, MdCancel } from "react-icons/md";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { FormField } from "@/components/ui/form-field";
-import { ImageUpload } from "@/components/ui/image-upload";
 import { UserUpdateInput } from "@/lib/validation";
 
 export default function AccountSettingsPage() {
@@ -17,7 +16,6 @@ export default function AccountSettingsPage() {
         email: "",
         avatarUrl: "",
     });
-    const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -47,19 +45,6 @@ export default function AccountSettingsPage() {
         if (name === "avatarUrl") setAvatarPreview(value);
     };
 
-    const handleAvatarFileChange = (file: File | null) => {
-        if (file) {
-            setAvatarFile(file);
-            const reader = new FileReader();
-            reader.onload = () => setAvatarPreview(reader.result as string);
-            reader.readAsDataURL(file);
-            setFormData((prev) => ({ ...prev, avatarUrl: "" }));
-        } else {
-            setAvatarFile(null);
-            setAvatarPreview(formData.avatarUrl || "");
-        }
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -70,23 +55,12 @@ export default function AccountSettingsPage() {
             const updateData: UserUpdateInput = {
                 name: formData.name,
                 email: formData.email,
+                avatarUrl: formData.avatarUrl || user?.avatarUrl || "",
             };
-
-            if (avatarFile) {
-                // Convert to base64 (for demo; in production, upload to cloud)
-                const reader = new FileReader();
-                const base64 = await new Promise<string>((resolve) => {
-                    reader.onload = () => resolve(reader.result as string);
-                    reader.readAsDataURL(avatarFile);
-                });
-                updateData.avatarUrl = base64;
-            } else if (formData.avatarUrl) {
-                updateData.avatarUrl = formData.avatarUrl;
-            }
 
             await updateUser(updateData);
             setSuccess(true);
-            setTimeout(() => router.push("/admin/settings"), 1500);
+            setTimeout(() => router.push("/admin/settings"), 1500); // in next version we might remove this line
         } catch (err) {
             setError(err instanceof Error ? err.message : "حدث خطأ أثناء الحفظ");
         } finally {
@@ -135,14 +109,6 @@ export default function AccountSettingsPage() {
                             )}
                         </div>
 
-                        <div className="w-full">
-                            <ImageUpload
-                                value={avatarFile || ""}
-                                onChange={handleAvatarFileChange}
-                                label="الصورة الشخصية (اختياري)"
-                            />
-                        </div>
-
                         <FormField
                             label="رابط الصورة"
                             name="avatarUrl"
@@ -150,6 +116,7 @@ export default function AccountSettingsPage() {
                             value={formData.avatarUrl || ""}
                             onChange={handleChange}
                             placeholder="https://example.com/avatar.jpg"
+                            className="flex-1 w-full"
                         />
                     </div>
 

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -62,7 +61,7 @@ export const AdminHeader = () => {
                     <MdNotifications size={20} />
                 </button>
 
-                <div className="w-10 h-10 rounded-full overflow-hidden border border-primary/20">
+                {/* <div className="w-10 h-10 rounded-full overflow-hidden border border-primary/20">
                     <Image
                         height={100}
                         width={100}
@@ -70,7 +69,11 @@ export const AdminHeader = () => {
                         className="w-full h-full object-cover"
                         src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5qpYbp919vE-5hQeM7K7ri4-NuagZOcKPgkM2Dzuoubr4z2i66NjSl-P8S0hUHhOgAmzig5vvBoq06yRswOYXGu0OC2PbhwTyCEYdp03nBoTenANudkrtS96T-bVjsaQErKikd90NfIKbApZPk2rhBMnqLLH7sPHZXgvytAGKmmA_PTdsQ4oZ-MEyXLGvO_tiJDZlq3Z3u6stLWQVxMLpBZCCbULOWIIreP9LwahbyYiqcNco34YVhbRoj0K98WSLvG_u8Cj2FU4"
                     />
-                </div>
+                </div> */}
+                {/* 
+                    there is no need for the user avatar in this version 
+                    //! we might add it later
+                */}
             </div>
         </header>
     );

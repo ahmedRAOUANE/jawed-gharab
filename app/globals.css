@@ -79,6 +79,10 @@ body {
   font-family: var(--font-sans);
 }
 
+button, .btn, .button {
+  cursor: pointer;
+}
+
 /* ... Mesh Background, Glass Card, Text Gradient styles ... */
 
 .glass-card {
