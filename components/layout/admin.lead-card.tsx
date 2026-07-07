@@ -6,9 +6,8 @@ import {
     MdBusiness,
     MdMovie,
     MdExpandMore,
-    MdChat,
-    MdEmail,
 } from "react-icons/md";
+import { EmailReplyBtn } from "./admin.email-reply-btn";
 
 export interface Lead {
     id: number;
@@ -19,9 +18,14 @@ export interface Lead {
     budget?: string;
     location?: string;
     deadline?: string;
-    status: string;
     icon: "person" | "business" | "movie";
     createdAt: Date;
+    initials: string;
+    email: string;
+    projectType: string;
+    status: "new" | "pending" | "replied";
+    replied?: boolean;
+    repliedAt?: string;
 }
 
 const iconMap = {
@@ -36,6 +40,7 @@ interface LeadCardProps {
 
 export const LeadCard = ({ lead }: LeadCardProps) => {
     const [expanded, setExpanded] = useState(false);
+    const [isReplied, setIsReplied] = useState(lead.replied);
     const IconComponent = iconMap[lead.icon];
 
     const toggleExpand = () => {
@@ -118,28 +123,13 @@ export const LeadCard = ({ lead }: LeadCardProps) => {
                         )}
                     </div>
                     <div className="flex flex-col justify-end gap-3">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                // Handle WhatsApp click
-                                console.log("WhatsApp clicked for", lead.name);
-                            }}
-                            className="w-full bg-[#25D366] text-[#001E0D] font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:brightness-110 transition-all active:scale-95"
-                        >
-                            <MdChat size={20} className="fill-current" />
-                            تواصل عبر واتساب
-                        </button>
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                // Handle Email click
-                                console.log("Email clicked for", lead.name);
-                            }}
-                            className="w-full bg-primary-container text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-primary-fixed-dim transition-all active:scale-95"
-                        >
-                            <MdEmail size={20} />
-                            إرسال بريد
-                        </button>
+                        {!isReplied ? (
+                            <EmailReplyBtn lead={lead} onclick={() => setIsReplied(true)} />
+                        ) : (
+                            <p className="text-center font-caption text-caption text-on-surface-variant italic">
+                                تم الرد {lead.repliedAt || "منذ قليل"}
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>

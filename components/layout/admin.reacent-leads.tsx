@@ -1,6 +1,7 @@
 // components/layout/admin.reacent-leads.tsx
-import { Lead, LeadCard } from "../ui/admin.lead-card";
+import { LeadCard } from "../ui/admin.lead-card";
 import { LeadCardSkeleton } from "../ui/lead-card-skeleton";
+import { Lead } from "./admin.lead-card";
 
 interface RecentLeadsListProps {
     leads: Lead[];

@@ -60,8 +60,10 @@ export default function LeadsPage() {
             const mappedLeads: Lead[] = data.data.map((item: Lead) => ({
                 id: item.id,
                 name: item.name,
+                replied: item.replied,
+                repliedAt: new Date(item.repliedAt || "").toLocaleDateString(),
                 type: item.type,
-                date: new Date(item.createdAt).toLocaleDateString("ar-SA"),
+                createdAt: new Date(item.createdAt).toLocaleDateString("ar-SA"),
                 details: item.details,
                 budget: item.budget || undefined,
                 location: item.location || undefined,
@@ -91,11 +93,6 @@ export default function LeadsPage() {
         }
     }, [statusFilter, page, limit]);
 
-    useEffect(() => {
-        const fetchData = async () => fetchLeads();
-        fetchData();
-    }, [fetchLeads]);
-
     // Update URL when filter changes
     const updateFilter = (filter: string) => {
         setActiveFilter(filter);
@@ -106,6 +103,11 @@ export default function LeadsPage() {
         if (apiStatus) params.append("status", apiStatus);
         router.push(`/admin/requests?${params.toString()}`);
     };
+
+    useEffect(() => {
+        const fetchData = async () => fetchLeads();
+        fetchData();
+    }, [fetchLeads]);
 
     return (
         <main className="pt-32 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto pb-32">

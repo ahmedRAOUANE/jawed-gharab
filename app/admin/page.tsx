@@ -6,9 +6,9 @@ import { ActiveProjectsList } from "@/components/layout/admin.active-projects";
 import { RecentLeadsList } from "@/components/layout/admin.reacent-leads";
 import ScrollReveal from "@/components/providers/ScrollReveal";
 import { StatsCard } from "@/components/ui/admin.stats-card";
-import { Lead } from "@/components/ui/admin.lead-card";
 import { Request } from "@prisma/client";
 import { AdminProjectOverview } from "@/lib/validation";
+import { Lead } from "@/components/layout/admin.lead-card";
 
 type DashboardStats = {
     activeProjects: number;
@@ -55,6 +55,7 @@ export default function AdminOverviewPage() {
                     id: l.id,
                     initials: l.name.charAt(0),
                     name: l.name,
+                    email: l.email,
                     projectType: l.type,
                     status: l.status.toLowerCase(),
                     replied: l.replied,
