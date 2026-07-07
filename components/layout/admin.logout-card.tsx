@@ -3,11 +3,13 @@
 
 import { MdLogout } from "react-icons/md";
 
-export const LogoutCard = () => {
-    const handleLogout = () => {
-        // Implement logout logic (clear session, redirect, etc.)
-        console.log("Logging out...");
-        // Redirect to login page or perform API call
+export const LogoutCard = ({onlogout}: {onlogout: () => Promise<void>}) => {
+    const handleLogout = async () => {
+        try {
+            await onlogout()
+        } catch (error) {
+            console.log("error login out: ", error);
+        }
     };
 
     return (

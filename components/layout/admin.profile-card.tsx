@@ -1,15 +1,15 @@
-// components/layout/admin.profile-card.tsx
 "use client";
 
 import Image from "next/image";
 import Link from "next/link";
+import { FaRegUserCircle } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
 
 interface ProfileCardProps {
     name: string;
     email: string;
     role: string;
-    avatarUrl: string;
+    avatarUrl?: string;
     accountStatus: string;
     profileProgress: number;
 }
@@ -25,14 +25,18 @@ export const ProfileCard = ({
     return (
         <div className="bg-surface border border-primary/20 rounded-2xl p-8 flex flex-col items-center text-center transition-all duration-500 hover:border-white/20">
             <div className="relative mb-6 group">
-                <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-primary/50 p-1 group-hover:border-primary transition-all duration-300">
-                    <Image
-                        width={128}
-                        height={128}
-                        src={avatarUrl}
-                        alt={name}
-                        className="w-full h-full object-cover rounded-full"
-                    />
+                <div className="flex items-center justify-center w-32 aspect-square rounded-full overflow-hidden border-2 border-primary/50 p-1 group-hover:border-primary transition-all duration-300">
+                    {avatarUrl ? (
+                        <Image
+                            width={128}
+                            height={128}
+                            src={avatarUrl}
+                            alt={name}
+                            className="w-full h-full object-cover rounded-full"
+                        />
+                    ) : (
+                        <FaRegUserCircle size={144} />
+                    )}
                 </div>
 
                 <Link

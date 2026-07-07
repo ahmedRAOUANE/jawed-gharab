@@ -12,6 +12,7 @@ interface User {
     accountStatus: string;
     profileProgress: number;
     emailVerified: boolean;
+    lastLogin: string;
 }
 
 interface AuthContextType {
