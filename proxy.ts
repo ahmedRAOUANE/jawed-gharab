@@ -22,10 +22,11 @@ const publicApiRoutes = [
     "/api/auth/resend-verification",
     "/api/auth/forgot-password",
     "/api/auth/reset-password",
+    "/api/requests"
 ];
 
 // Protected routes (require authentication)
-const protectedRoutes = ["/admin", "/api/projects", "/api/requests", "/api/users", "/api/stats"];
+const protectedRoutes = ["/admin", "/api/projects", "/api/users", "/api/stats"];
 
 export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;

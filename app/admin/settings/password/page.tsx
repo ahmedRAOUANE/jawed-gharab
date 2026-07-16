@@ -1,20 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MdSave, MdCancel } from "react-icons/md";
 import { FormField } from "@/components/ui/form-field";
+import { ChangePasswordInput } from "@/lib/validation";
 
 export default function PasswordSettingsPage() {
     const router = useRouter();
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<ChangePasswordInput>({
         currentPassword: "",
         newPassword: "",
         confirmNewPassword: "",
+        verificationCode: ""
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    // const [btnDisabled, setBtnDisabled] = useState(false);
+    const [countdown, setCountdown] = useState(0);
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -40,6 +44,25 @@ export default function PasswordSettingsPage() {
         return true;
     };
 
+    const sendVerificationCode = async () => {
+        setCountdown(60);
+
+        try {
+            const res = await fetch("/api/auth/change-password/send-code", {
+                method: "POST",
+                credentials: "include"
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                setError(data.message);
+                return;
+            }
+        } catch (err) {
+            console.log("error sending verification code: ", err);
+        }
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!validate()) return;
@@ -54,6 +77,7 @@ export default function PasswordSettingsPage() {
                     currentPassword: formData.currentPassword,
                     newPassword: formData.newPassword,
                     confirmNewPassword: formData.confirmNewPassword,
+                    verificationCode: formData.verificationCode,
                 }),
             });
 
@@ -71,6 +95,22 @@ export default function PasswordSettingsPage() {
         }
     };
 
+    useEffect(() => {
+        if (countdown <= 0) return;
+
+        const timer = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [countdown]);
+
     return (
         <main className="pt-32 pb-40 px-6 md:px-margin-desktop max-w-container-max mx-auto">
             <div className="mb-12">
@@ -82,7 +122,7 @@ export default function PasswordSettingsPage() {
                 </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="max-w-md mx-auto">
+            <form onSubmit={handleSubmit} className="max-w-lg mx-auto">
                 <div className="glass-card p-8 rounded-2xl space-y-6">
                     <FormField
                         label="كلمة المرور الحالية"
@@ -113,6 +153,29 @@ export default function PasswordSettingsPage() {
                         placeholder="أعد إدخال كلمة المرور الجديدة"
                         required
                     />
+
+                    <FormField
+                        label="رمز التحقق"
+                        name="verificationCode"
+                        type="password"
+                        value={formData.verificationCode}
+                        onChange={handleChange}
+                        placeholder="ادخل رمز التحقق الذي يتم ارساله عبر الايميل"
+                        required
+                    >
+                        <button
+                            type="button"
+                            onClick={sendVerificationCode}
+                            disabled={countdown > 0}
+                            className={`flex-1/2 px-8 py-3 ${countdown > 0 ? "cursor-not-allowed bg-on-background text-on-primary" : "bg-primary-container text-on-primary-container"} rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-60 disabled:hover:scale-100`}
+                        >
+                            <span>
+                                {countdown > 0
+                                    ? `إعادة الإرسال خلال ${countdown} ثانية`
+                                    : "أرسل الرمز"}
+                            </span>
+                        </button>
+                    </FormField>
 
                     {error && (
                         <div className="p-3 bg-error-container/20 border border-error/30 rounded-xl text-error text-center">

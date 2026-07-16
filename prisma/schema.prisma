@@ -59,7 +59,7 @@ enum EmailProviders {
 model User {
   id              Int           @id @default(autoincrement())
   email           String        @unique
-  password        String        // hashed
+  password        String // hashed
   name            String
   role            UserRole      @default(VIEWER)
   avatarUrl       String?       @map("avatar_url")
@@ -79,11 +79,12 @@ model User {
   lockUntil                DateTime? @map("lock_until")
 
   // Relations
-  projects                Project[]
-  emailVerificationTokens EmailVerificationToken[]
-  passwordResetTokens     PasswordResetToken[]
-  loginAttemptsLog        LoginAttempt[]
-  config Config?
+  projects                   Project[]
+  emailVerificationTokens    EmailVerificationToken[]
+  passwordResetTokens        PasswordResetToken[]
+  loginAttemptsLog           LoginAttempt[]
+  config                     Config?
+  passwordChangeVerification PasswordChangeVerification?
 
   @@map("users")
 }
@@ -102,7 +103,7 @@ model Config {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  uid   Int @unique
+  uid Int @unique
 
   user User @relation(fields: [uid], references: [id])
 
@@ -205,4 +206,16 @@ model LoginAttempt {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("login_attempts")
+}
+
+model PasswordChangeVerification {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  token     String   @unique // hashed code or token
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

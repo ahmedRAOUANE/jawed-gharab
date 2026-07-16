@@ -63,3 +63,12 @@ export function generatePasswordResetToken(): {
 export function isTokenExpired(expiresAt: Date): boolean {
     return new Date() > expiresAt;
 }
+
+/**
+ * Generates a random 6‑digit code as a zero‑padded string (000000 – 999999).
+ * @returns {string} - 6 characters, e.g., "003845"
+ */
+export function generateSixDigitCode() {
+    const num = crypto.randomInt(0, 1000000);
+    return num.toString().padStart(6, '0');
+}

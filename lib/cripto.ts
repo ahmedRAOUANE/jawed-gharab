@@ -1,4 +1,3 @@
-// lib/encryption.js
 import crypto from 'crypto';
 
 // Get the key from environment

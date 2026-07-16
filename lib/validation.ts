@@ -178,6 +178,7 @@ export const ChangePasswordSchema = z
     currentPassword: z.string().min(6, "كلمة المرور الحالية مطلوبة"),
     newPassword: z.string().min(6, "كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل"),
     confirmNewPassword: z.string(),
+    verificationCode: z.string().regex(/^\d{6}$/, "رمز التحقق يجب أن يتكون من 6 أرقام"),
   })
   .refine((data) => data.newPassword === data.confirmNewPassword, {
     message: "كلمتا المرور غير متطابقتين",

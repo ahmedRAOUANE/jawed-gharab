@@ -487,3 +487,51 @@ export async function sendRequestConfirmationEmail(
     html,
   }, config);
 }
+
+/**
+ * Send email verification link
+ */
+export async function sendChangePasswordVerificationEmail(
+  config: MailConfig,
+  token: string,
+): Promise<void> {
+  const html = `
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        body { font-family: Arial, sans-serif; background: #081425; color: #eff3fc; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #152031; border-radius: 16px; padding: 40px; }
+        .header { text-align: center; font-size: 24px; font-weight: bold; color: #eff3fc; }
+        .content { margin-top: 24px; line-height: 1.8; }
+        .button { display: inline-block; background: #2563eb; color: #eff3fc; padding: 12px 32px; border-radius: 8px; text-decoration: none; margin-top: 16px; }
+        .footer { margin-top: 32px; font-size: 14px; color: #eff3fc; text-align: center; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">${config.appName}</div>
+        <div class="content">
+          <h2>يريد ${config.name}، تغيير كلمة المرور</h2>
+          <p>
+            هذا هو رمز التحقق لتغيير كلمة مرورك
+          </p>
+          <p>${token}</p>
+          <p>إذا لم تقم بإنشاء حساب، يمكنك تجاهل هذا البريد.</p>
+          <p>هذا الرمز صالح لمدة ساعة.</p>
+        </div>
+        <div class="footer">
+          ${config.appName} - جميع الحقوق محفوظة
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  await sendEmail({
+    to: config.email,
+    subject: `رمز تغيير كلمة المرور - ${config.appName}`,
+    html,
+  }, config);
+}
