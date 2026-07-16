@@ -41,13 +41,16 @@ export async function POST(request: NextRequest) {
         if (!isValid) 
             return errorResponse("invalid password", 401, "كلمة المرور الحالية غير صحيحة");
 
-        if (user.passwordChangeVerification?.used) 
+        if (!user.passwordChangeVerification) 
+            return errorResponse("verification required", 400, "يجب طلب رمز التحقق أولاً");
+
+        if (user.passwordChangeVerification.used) 
             return errorResponse("the change password code code already used", 400, "الكود الذي ارسلته مستخدم بالفعل")
 
-        if (user.passwordChangeVerification?.expiresAt && Date.now() > user.passwordChangeVerification.expiresAt.getTime()) 
+        if (user.passwordChangeVerification.expiresAt && Date.now() > user.passwordChangeVerification.expiresAt.getTime()) 
             return errorResponse("expired verification code", 400, "الرمز منتهي الصلاحية");
 
-        if (user.passwordChangeVerification?.token && !compareToken(verificationCode, user.passwordChangeVerification.token)) 
+        if (user.passwordChangeVerification.token && !compareToken(verificationCode, user.passwordChangeVerification.token)) 
             return errorResponse("invalid token", 401, "رمز غير صالح");
 
         // Hash new password

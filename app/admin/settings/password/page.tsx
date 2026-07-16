@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { SubmitEventHandler, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MdSave, MdCancel } from "react-icons/md";
 import { FormField } from "@/components/ui/form-field";
@@ -17,7 +17,7 @@ export default function PasswordSettingsPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
-    // const [btnDisabled, setBtnDisabled] = useState(false);
+    const [sendingCode, setSendingCode] = useState(false);
     const [countdown, setCountdown] = useState(0);
 
     const handleChange = (
@@ -45,7 +45,10 @@ export default function PasswordSettingsPage() {
     };
 
     const sendVerificationCode = async () => {
-        setCountdown(60);
+        if (sendingCode || countdown > 0) return;
+        
+        setError(null);
+        setSendingCode(true);
 
         try {
             const res = await fetch("/api/auth/change-password/send-code", {
@@ -56,18 +59,24 @@ export default function PasswordSettingsPage() {
 
             if (!res.ok) {
                 setError(data.message);
+                setSendingCode(false);
                 return;
             }
+            setCountdown(60);
         } catch (err) {
-            console.log("error sending verification code: ", err);
+            console.error("error sending verification code: ", err);
+            setError("حدث خطأ أثناء إرسال الرمز");
+            setSendingCode(false);
         }
     }
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (e) => {
         e.preventDefault();
         if (!validate()) return;
+
         setLoading(true);
         setSuccess(false);
+        setError(null);
 
         try {
             const res = await fetch("/api/auth/change-password", {
@@ -79,11 +88,12 @@ export default function PasswordSettingsPage() {
                     confirmNewPassword: formData.confirmNewPassword,
                     verificationCode: formData.verificationCode,
                 }),
+                credentials: "include"
             });
 
             if (!res.ok) {
                 const data = await res.json();
-                throw new Error(data.error || "فشل تغيير كلمة المرور");
+                throw new Error(data.message || "فشل تغيير كلمة المرور");
             }
 
             setSuccess(true);
@@ -98,17 +108,17 @@ export default function PasswordSettingsPage() {
     useEffect(() => {
         if (countdown <= 0) return;
 
-        const timer = setInterval(() => {
+        const timer = setTimeout(() => {
             setCountdown(prev => {
                 if (prev <= 1) {
-                    clearInterval(timer);
+                    setSendingCode(false);
                     return 0;
                 }
                 return prev - 1;
             });
         }, 1000);
 
-        return () => clearInterval(timer);
+        return () => clearTimeout(timer);
     }, [countdown]);
 
     return (
@@ -166,13 +176,17 @@ export default function PasswordSettingsPage() {
                         <button
                             type="button"
                             onClick={sendVerificationCode}
-                            disabled={countdown > 0}
-                            className={`flex-1/2 px-8 py-3 ${countdown > 0 ? "cursor-not-allowed bg-on-background text-on-primary" : "bg-primary-container text-on-primary-container"} rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-60 disabled:hover:scale-100`}
+                            disabled={countdown > 0 || sendingCode}
+                            className={`flex-1/2 px-8 py-3 ${countdown > 0 || sendingCode ? "cursor-not-allowed bg-on-background text-on-primary" : "bg-primary-container text-on-primary-container"} rounded-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-60 disabled:hover:scale-100`}
                         >
                             <span>
-                                {countdown > 0
-                                    ? `إعادة الإرسال خلال ${countdown} ثانية`
-                                    : "أرسل الرمز"}
+                                {
+                                    sendingCode && countdown <= 0
+                                        ? "جاري إرسال الرمز..."
+                                        : countdown > 0
+                                            ? `إعادة الإرسال خلال ${countdown} ثانية`
+                                            : "أرسل الرمز"
+                                }
                             </span>
                         </button>
                     </FormField>
